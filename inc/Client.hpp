@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/02 17:32:24 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/03 17:58:19 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ class Server;
 class Client{
 	
 	protected:
-		Server server;
+		// Server server;
 		int Socket;
 		sockaddr_in serverAddress;
 		sockaddr_in clientAddress;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:45 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/03 15:55:54 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/03 17:55:22 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,29 +16,30 @@
 class Server;
 class Client;
 
-
-int main (int ac, char **av)
+int main(int ac, char **av)
 {
-	if (ac != 3)
-		return(std::cout << "Usage ./ircserv <port> <passwd>" << std::endl, 1);
-	
-	Server a;
-	int port = std::atoi(av[1]);
-	std::string passwd = av[2];
-	
-	try{
-		a.InitServer();
-		a.Bind();
-		a.Listen();
-		if (!a.setEpoll(passwd))
-			throw std::exception();
-	}
-	catch(...)
-	{
-		std::cout << "Server failed at initialization\n";
-	}
-	
+    if (ac != 3) {
+        std::cerr << "Usage: ./ircserv <port> <passwd>" << std::endl;
+        return 1;
+    }
+
+    int port = std::atoi(av[1]);
+    std::string passwd = av[2];
+
+    try {
+        Server server(port, passwd);
+        server.InitServer();
+        server.Bind();
+        server.Listen();
+        server.Run();
+    } catch (const std::exception &e) {
+        std::cerr << "Server failed: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
+
 	
 
 
