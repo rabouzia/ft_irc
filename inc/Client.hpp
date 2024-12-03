@@ -3,12 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rabouzia <rabouzia@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/11/23 17:44:01 by rabouzia         ###   ########.fr       */
+/*   Updated: 2024/12/02 17:32:24 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
 
 #include <sys/types.h>  // Types de données de base
 #include <sys/socket.h> // Fonctions de gestion de socket
@@ -16,12 +19,26 @@
 #include <arpa/inet.h>  // Conversion d'adresses et autres utilitaires réseaux
 #include <netdb.h>      // Fonctions de résolution de noms
 #include <unistd.h>     // Fonctions POSIX comme close()
-
+#include "Server.hpp"
+#include <string>
+#include <iostream>
+class Server;
 
 
 class Client{
 	
 	protected:
-	
-	public:	
+		Server server;
+		int Socket;
+		sockaddr_in serverAddress;
+		sockaddr_in clientAddress;
+	public:
+		Client();
+		~Client(){};
+		void Send();
+		void Connect();
+		void Accept();
+		void InitClient();
+
 };
+#endif

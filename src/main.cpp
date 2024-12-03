@@ -3,23 +3,77 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rabouzia <rabouzia@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:45 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/11/23 17:46:20 by rabouzia         ###   ########.fr       */
+/*   Updated: 2024/12/03 15:55:54 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <iostream>
+#include "Server.hpp"
 
-#include "main.hpp"
+class Server;
+class Client;
 
 
-int main ()
+int main (int ac, char **av)
 {
-
-
+	if (ac != 3)
+		return(std::cout << "Usage ./ircserv <port> <passwd>" << std::endl, 1);
+	
+	Server a;
+	int port = std::atoi(av[1]);
+	std::string passwd = av[2];
+	
+	try{
+		a.InitServer();
+		a.Bind();
+		a.Listen();
+		if (!a.setEpoll(passwd))
+			throw std::exception();
+	}
+	catch(...)
+	{
+		std::cout << "Server failed at initialization\n";
+	}
 	
 }
+	
+
+
+// #include <string.h>
+//  #include "Client.hpp"
+//  int main ()
+//  {
+	
+//  	 // creating socket
+//     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+//     // specifying address
+//     sockaddr_in serverAddress;
+//     serverAddress.sin_family = AF_INET;
+//     serverAddress.sin_port = htons(8080);
+//     serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+//     // sending connection request
+//     connect(clientSocket, (struct sockaddr*)&serverAddress,
+//             sizeof(serverAddress));
+
+//     // sending data
+// 	std::string message;
+//     getline(std::cin , message);
+//     send(clientSocket, static_cast<void *>(&message), message.size(), 0);
+
+//     // closing socket
+//     close(clientSocket);
+
+//     return 0;
+// }
+	
+
+	
+// }
 
 /*
 
