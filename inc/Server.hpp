@@ -19,7 +19,7 @@ class Server {
 	    int epollFd;
 	    std::string _passwd;
 
-	    std::map<int, std::string> clients; // Map to store client sockets and their info
+	    std::map<int, std::string> clients;
 
 	    void SetNonBlocking(int fd);
 	    void HandleNewConnection();

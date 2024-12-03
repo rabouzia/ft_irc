@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/03 18:10:58 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/03 19:14:12 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,17 +70,20 @@ void Server::Run()
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverSocket, &event) == -1)
         throw std::runtime_error("Failed to add server socket to epoll");
 
-    epoll_event events[10];
+    epoll_event eventsClient[10];
     while (true) {
-        int eventCount = epoll_wait(epollFd, events, 10, -1);
+        int eventCount = epoll_wait(epollFd, eventsClient, 10, -1);
         if (eventCount == -1)
             throw std::runtime_error("epoll_wait failed");
 
         for (int i = 0; i < eventCount; ++i) {
-            if (events[i].data.fd == serverSocket) {
+            if (eventsClient[i].data.fd == serverSocket) 
+            {
                 HandleNewConnection();
-            } else if (events[i].events & EPOLLIN) {
-                HandleClientMessage(events[i].data.fd);
+            } 
+            else if (eventsClient[i].events & EPOLLIN) 
+            {
+                HandleClientMessage(eventsClient[i].data.fd);
             }
         }
     }
