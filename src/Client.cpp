@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:10 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/02 18:07:23 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/03 19:53:17 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,11 @@ void Client::Connect()
 		
 }
 
+// void Client::ValidUser()
+// {
+// 	/*Chaque utilisateur n'a pas plus de neuf (9) caractères. Caractères disponibles dans le surnom:
+// 	 a-z, A-Z, 0-9 et symboles spéciaux -, [, ], \, ^, {, }*/
+// }
 
 void Client::Send()
 {

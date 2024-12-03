@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/03 19:14:12 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/03 20:55:43 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,18 +79,35 @@ void Server::Run()
         for (int i = 0; i < eventCount; ++i) {
             if (eventsClient[i].data.fd == serverSocket) 
             {
+                std::cout << "new user---->" << i <<std::endl;
                 HandleNewConnection();
             } 
             else if (eventsClient[i].events & EPOLLIN) 
             {
+                std::cout << "message client---->" << i <<std::endl;
                 HandleClientMessage(eventsClient[i].data.fd);
             }
         }
     }
 }
 
-void Server::HandleNewConnection()
-{
+
+#include <sstream>
+
+// Utility function to construct and send an IRC reply
+void SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message) {
+    std::ostringstream response;
+    response << ":server " << replyCode << " " << nickname << " :" << message << "\r\n";
+
+    std::string responseStr = response.str();
+    if (send(clientSocket, responseStr.c_str(), responseStr.size(), 0) == -1) {
+        std::cerr << "Failed to send reply to client: " << clientSocket << std::endl;
+    } else {
+        std::cout << "Sent: " << responseStr;
+    }
+}
+
+void Server::HandleNewConnection() {
     sockaddr_in clientAddr;
     socklen_t clientAddrLen = sizeof(clientAddr);
     int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
@@ -109,13 +126,17 @@ void Server::HandleNewConnection()
 
     clients[clientSocket] = ""; // Initialize client info
     std::cout << "New client connected: " << clientSocket << std::endl;
+
+    // Send a welcome message to the new client
+    std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
+    SendRPL(clientSocket, "001", nickname, "Welcome to the IRC network, " + nickname + "!");
 }
 
 void Server::HandleClientMessage(int clientFd)
 {
     char buffer[1024];
     int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-
+    std::cout << " =========================== " << buffer << std::endl;
     // deco ou erreur
     if (bytesRead <= 0) {
         close(clientFd);
@@ -129,7 +150,6 @@ void Server::HandleClientMessage(int clientFd)
     std::string message(buffer);
 
     std::cout << "Message from client " << clientFd << ": " << message << std::endl;
-
+  
     // Echo the message back to the client for testing
-    send(clientFd, message.c_str(), message.size(), 0);
 }
