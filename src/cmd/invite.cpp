@@ -6,7 +6,10 @@
 /*   By: ramzerk <ramzerk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/04 08:44:35 by ramzerk           #+#    #+#             */
-/*   Updated: 2024/12/04 08:44:36 by ramzerk          ###   ########.fr       */
+/*   Updated: 2024/12/04 09:16:20 by ramzerk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "Client.hpp"
+
+int INVITE(std::string user, std::string channel);

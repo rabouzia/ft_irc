@@ -6,7 +6,7 @@
 /*   By: ramzerk <ramzerk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/04 09:03:28 by ramzerk          ###   ########.fr       */
+/*   Updated: 2024/12/04 09:16:43 by ramzerk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 #include <unistd.h>     // Fonctions POSIX comme close()
 #include <iostream>
 // chaque username est unique de len max 9
-#include <sys/epoll.h>
+// #include <sys/epoll.h>
 #include "Server.hpp"
 #include <string>
 #include <iostream>
