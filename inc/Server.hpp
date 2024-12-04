@@ -1,27 +1,38 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rabouzia <rabouzia@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/23 17:16:45 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/11/23 17:43:56 by rabouzia         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
-#include <sys/types.h>  // Types de données de base
-#include <sys/socket.h> // Fonctions de gestion de socket
-#include <netinet/in.h> // Structures pour les adresses Internet
-#include <arpa/inet.h>  // Conversion d'adresses et autres utilitaires réseaux
-#include <netdb.h>      // Fonctions de résolution de noms
-#include <unistd.h>     // Fonctions POSIX comme close()
+#include <string>
+#include <vector>
+#include <map>
+#include <sys/epoll.h>
+#include <netinet/in.h>
+#include <stdexcept>
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <cstdlib>
 
+class Server {
 
+	private:
 
-class Server{
-	
-	protected:
+	    int serverSocket;
+	    sockaddr_in serverAddress;
+	    int epollFd;
+	    std::string _passwd;
+	    std::map<int, std::string> clients;
+	    void SetNonBlocking(int fd);
+	    void HandleNewConnection();
+	    void HandleClientMessage(int clientFd);
 
-	public:	
+	public:
+
+	    Server(int port, const std::string &passwd);
+	    ~Server();
+	    void InitServer();
+	    void Bind();
+	    void Listen();
+	    void Run();
 };
+
+#endif

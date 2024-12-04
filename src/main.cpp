@@ -3,22 +3,79 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rabouzia <rabouzia@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ramzerk <ramzerk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:45 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/02 19:50:21 by rabouzia         ###   ########.fr       */
+/*   Updated: 2024/12/04 09:01:32 by ramzerk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <iostream>
+#include "Server.hpp"
 
-#include "main.hpp"
+class Server;
+class Client;
 
-
-int main ()
+int main(int ac, char **av)
 {
-	select()
-	
+
+    if (ac != 3) {
+        std::cerr << "Usage: ./ircserv <port> <passwd>" << std::endl;
+        return 1;
+    }
+
+    int port = std::atoi(av[1]);
+    std::string passwd = av[2];
+
+    try {
+        Server server(port, passwd);
+        server.InitServer();
+        server.Bind();
+        server.Listen();
+        server.Run();
+    } catch (const std::exception &e) {
+        std::cerr << "Server failed: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
+
+	
+
+
+// #include <string.h>
+//  #include "Client.hpp"
+//  int main ()
+//  {
+	
+//  	 // creating socket
+//     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+//     // specifying address
+//     sockaddr_in serverAddress;
+//     serverAddress.sin_family = AF_INET;
+//     serverAddress.sin_port = htons(8080);
+//     serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+//     // sending connection request
+//     connect(clientSocket, (struct sockaddr*)&serverAddress,
+//             sizeof(serverAddress));
+
+//     // sending data
+// 	std::string message;
+//     getline(std::cin , message);
+//     send(clientSocket, static_cast<void *>(&message), message.size(), 0);
+
+//     // closing socket
+//     close(clientSocket);
+
+//     return 0;
+// }
+	
+
+	
+// }
 
 /*
 

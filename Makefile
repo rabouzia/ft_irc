@@ -1,6 +1,9 @@
-NAME       =	ircserv
+NAME       =	ircserv 
 
 SRC        =	src/main.cpp 		\
+				src/Server.cpp		\
+				src/Client.cpp		\
+				src/cmd/kick.cpp
 
 CC 		   =	c++
 
