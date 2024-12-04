@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ramzerk <ramzerk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:10 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/03 19:53:17 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/04 08:55:08 by ramzerk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,3 +53,13 @@ void Client::Send()
 	send(Socket, static_cast<void *>(&message), message.size(), 0);
 }
 
+/*
+int Client::Ping (std::string msg){
+
+	
+	send(_fd, (msg + "\r\n").c_str(), msg.length() + 2, MSG_NOSIGNAL);
+	return 1;
+}
+
+
+*/
