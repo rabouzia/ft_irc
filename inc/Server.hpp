@@ -25,14 +25,21 @@ class Server {
 		int num;
 	    std::string _passwd;
 		std::string ServerName;
-	    std::map<int, Client*> clients;
+	    std::map<int, Client*> clientImap;
+		std::map<std::string, Client*> clientSmap;
 		std::map<std::string, Channel> channel;
 	    void SetNonBlocking(int fd);
 	    void HandleNewConnection();
 	    void HandleClientMessage(int clientFd);
 		void disconnectClient(int fd);
 		void sendToClient(int fd, const std::string& response);
-		void irssiParsingData(std::vector<std::string>::iterator begin, int ClientFD);
+		void ParsingData(std::string str, int ClientFD);
+		int IsAclient(std::string& name)
+		{
+			if(clientSmap[name])
+				return clientSmap[name]->getSocket();
+			return -1;
+		}
 
 	public:
 
@@ -42,7 +49,7 @@ class Server {
 	    void Bind();
 	    void Listen();
 	    void Run();
-		void parseMessage(std::string message, int fd);
+	
 };
 
 #endif

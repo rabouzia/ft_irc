@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/05 16:16:26 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/05 19:01:38 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,8 @@ class Client{
 		{
 			return _nick;
 		}
+		void setNick(std::string& nick)
+		{_nick = nick;}
 		int getSocket()
 		{
 			return Socket;

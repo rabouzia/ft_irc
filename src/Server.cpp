@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/05 17:09:16 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/05 21:57:55 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,8 +143,8 @@ void Server::HandleNewConnection() {
     // Send a welcome message to the new client
     std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
      Client *newClient = new Client (clientSocket, (nickname + intToString(num++)));
-    clients[clientSocket] = newClient;
-    SendRPL(clientSocket, "001", clients[clientSocket]->getNick(), "Welcome to the IRC network, " + clients[clientSocket]->getNick() + "!");
+    clientImap[clientSocket] = newClient;
+    SendRPL(clientSocket, "001", clientImap[clientSocket]->getNick(), "Welcome to the IRC network, " + clientImap[clientSocket]->getNick() + "!");
 }
 
 
@@ -167,7 +167,7 @@ std::string cleanIrssiString(std::string inputString, char c) {
 
 
 void Server::disconnectClient(int fd) {
-    clients.erase(fd);
+    clientImap.erase(fd);
     epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
     std::cout << "Client disconnected: " << fd << std::endl;
     close(fd);
@@ -178,87 +178,107 @@ void Server::sendToClient(int fd, const std::string& message) {
     send(fd, message.c_str(), message.size(), 0);
 }
 
-void Server::irssiParsingData(std::vector<std::string>::iterator begin, int ClientFD)
+
+
+void Server::ParsingData(std::string str, int ClientFD)
 {
-	std::vector <std::string>::iterator it = begin;
+	std::vector <std::string> data = split(str, ' ');
+	std::vector <std::string>::iterator it = data.begin();
+	std::cout << "SPLIT:" << *it << std::endl; 
 	if (it->compare("PASS") == 0)
     {
         if ((it + 1)->compare(_passwd.c_str()) == 0) {
-			std::cout << "Correct Password1\n";
-            clients[ClientFD]->setPasswordVerified(true);
-            std::cout << "Correct Password2\n";
+            clientImap[ClientFD]->setPasswordVerified(true);
+			clientSmap[clientImap[ClientFD]->getNick()] = clientImap[ClientFD];
+            std::cout << "Correct Password\n";
         } 
         else {
-            SendRPL(ClientFD, "464", clients[ClientFD]->getNick(), "Password incorrect.");
+            SendRPL(ClientFD, "464", clientImap[ClientFD]->getNick(), "Password incorrect.");
             disconnectClient(ClientFD);
             return;
         }
     }
-	else
-	{
-		SendRPL(ClientFD, "464", clients[ClientFD]->getNick(), "Password incorrect.");
-        disconnectClient(ClientFD);
-        return;
-	}
-	
-}
-
-void Server::parseMessage(std::string message, int fd)
-{   
-
-
-    message = cleanIrssiString(message, '\r');
-	message = replaceIrssiString(message, '\n', ' ');
-    std::vector<std::string> splitMsg  = split(message, ' ');
-    std::vector <std::string>::iterator it = splitMsg.begin();
-
-	//std::cout << "Parse message " << *it << " " << *(it + 1) << " " << *(it + 2) << std::endl;
-	if (it->compare("CAP") == 0 && (it + 1)->compare("LS") == 0)
-		irssiParsingData((it + 2), fd);
-    else if (it->compare("PASS") == 0)
+	else if ((it)->compare("NICK") == 0)
     {
-        if ((it + 1)->compare(_passwd.c_str()) == 0) {
-            clients[fd]->setPasswordVerified(true);
-            std::cout << "Correct Password\n";
+        if (clientImap[ClientFD]->GetPasswordVerified()) {
+			if (!(it + 1)->empty())
+			{
+				std::string mess = ":" + *(it + 1) + " NICK " + *(it + 1) + "\r\n";
+				send(ClientFD, mess.c_str(), mess.size(), 0);
+				clientSmap.erase(clientImap[ClientFD]->getNick());
+				clientImap[ClientFD]->setNick(*(it + 1));
+				clientSmap[clientImap[ClientFD]->getNick()] = clientImap[ClientFD];
+				std::cout <<  "This Nick has been seting " << *(it + 1) << std::endl;
+			}
         } 
         else {
-            SendRPL(fd, "464", clients[fd]->getNick(), "Password incorrect.");
-            disconnectClient(fd);
+            SendRPL(ClientFD, "433", clientImap[ClientFD]->getNick(), " :Nickname is already in use");
             return;
         }
     }
-    else if (it->compare("PING") == 0)
+	else if (it->compare("PING") == 0)
     {
-        if (splitMsg.size() > 1) {
-			std::cout << "PONG DANS TA MERE \n";
+        if (!(it + 1)->empty()) {
+			std::cout << "PONG SEND\n";
             std::string response = ":" + ServerName + " PONG " + ServerName + " :" + *(it + 1) + "\r\n";
-            sendToClient(fd, response);
+            sendToClient(ClientFD, response);
         } else {
-            // Handle malformed PING message
             std::cerr << "Malformed PING message" << std::endl;
         }
     }
+	else if (it->compare("PRIVMSG") == 0)
+	{
+		if(IsAclient(*(it + 1)) != -1)
+		{
+			std::cout << "FIND !!!\n";
+			std::ostringstream response;
+    		response << " PRIVMSG " << clientSmap[*(it +1)]->getNick() << " " << *(it + 2) << "\r\n";
+   			std::string responseStr = response.str();
+			send (clientSmap[*(it +1)]->getSocket(), responseStr.c_str() , responseStr.size(), 0);
+		}
+		// else
+			//send rpl error
+	}
+	else
+        return;
 }
+
+// void Server::parseMessage(std::string message, int fd)
+// {   
+
+
+//     message = cleanIrssiString(message, '\r');
+//     std::vector<std::string> splitMsg  = split(message, '\n');
+//     std::vector <std::string>::iterator it = splitMsg.begin();
+//     if (it->compare("PASS") == 0)
+//     {
+// 		it++;
+//         if ((it)->compare(_passwd.c_str()) == 0) {
+//             clientImap[fd]->setPasswordVerified(true);
+//             std::cout << "Correct Password\n";
+//         } 
+//         else {
+//             SendRPL(fd, "464", clientImap[fd]->getNick(), "Password incorrect.");
+//             disconnectClient(fd);
+//             return;
+//         }
+//     }
+    
+// }
 
 void Server::HandleClientMessage(int clientFd)
 {
     char buffer[1024];
     int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-    //std::cout << " =========================== " << buffer << std::endl;
-    // deco ou erreur
     if (bytesRead <= 0) {
-        close(clientFd);
-        epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, 0);
-        clients.erase(clientFd);
+        disconnectClient(clientFd);
         std::cout << "Client disconnected: " << clientFd << std::endl;
         return;
     }
-
     buffer[bytesRead] = '\0';
-    std::string message(buffer);
-    parseMessage(message, clientFd);
-
-   // std::cout << "Message from client " << clientFd << ": " << message << std::endl;
-  
-    // Echo the message back to the client for testing
+	std::string buff = cleanIrssiString(buffer, '\r');
+    std::cout << " =========================== " << buff << std::endl;
+	std::vector<std::string> tabData = split(buff, '\n');
+	for (std::vector<std::string>::iterator it = tabData.begin(); it != tabData.end(); it++)
+		ParsingData(*it, clientFd);
 }
