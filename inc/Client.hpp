@@ -33,11 +33,13 @@ class Client{
 		sockaddr_in serverAddress;
 		sockaddr_in clientAddress;
 		std::string _nick;
+		bool psswdCheck;
 		bool InChannel;
+
 	public:
-		Client();
-		Client(int FD, std::string nick)
+		Client(int FD, const std::string nick)
 		{
+			psswdCheck = false;
 			Socket = FD;
 			_nick =  nick;
 		}
@@ -52,7 +54,9 @@ class Client{
 		{
 			return Socket;
 		}
+		bool GetPasswordVerified();
 		void InitClient();
+		void setPasswordVerified(bool status);
 
 };
 #endif

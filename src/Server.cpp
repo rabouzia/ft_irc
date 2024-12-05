@@ -16,13 +16,13 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
-
+#include "errmsg.hpp"
 Server::Server(int port, const std::string &passwd) : _passwd(passwd)
 {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1)
         throw std::runtime_error("Failed to create socket");
-
+    ServerName = "The IRC";
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
@@ -138,17 +138,13 @@ void Server::HandleNewConnection() {
 
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &event) == -1)
         throw std::runtime_error("Failed to add client socket to epoll");
-
-    //clients[clientSocket] = ""; // Initialize client info
     std::cout << "New client connected: " << clientSocket << std::endl;
 
     // Send a welcome message to the new client
     std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
-
-
-    Client  newClient(clientSocket, (nickname + intToString(num++)));
+    Client newClient(clientSocket, (nickname + intToString(num++)));
     clients[clientSocket] = newClient;
-    SendRPL(clientSocket, "001", nickname, "Welcome to the IRC network, " + nickname + intToString(num) + "!");
+    SendRPL(clientSocket, "001", clients[clientSocket].getNick(), "Welcome to the IRC network, " + clients[clientSocket].getNick() + "!");
 }
 
 
@@ -166,6 +162,20 @@ std::string cleanIrssiString(std::string inputString) {
     return inputString;
 }
 
+
+
+void Server::disconnectClient(int fd) {
+    clients.erase(fd);
+    epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
+    std::cout << "Client disconnected: " << fd << std::endl;
+    close(fd);
+}
+
+
+void Server::sendToClient(int fd, const std::string& message) {
+    send(fd, message.c_str(), message.size(), 0);
+}
+
 void Server::parseMessage(std::string message, int fd)
 {   
 
@@ -173,20 +183,28 @@ void Server::parseMessage(std::string message, int fd)
     message = cleanIrssiString(message);
     std::vector<std::string> splitMsg  = split(message, ' ');
     std::vector <std::string>::iterator it = splitMsg.begin();
+
     if (it->compare("PASS") == 0)
     {
-        std::cout << *(it + 1) << std::endl;
-        if ((it + 1)->compare(_passwd.c_str()) == 0)
+        if ((it + 1)->compare(_passwd.c_str()) == 0) {
+            clients[fd].setPasswordVerified(true);
             std::cout << "Correct Password\n";
-        else
-        {
-            close(fd);
-            epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
-            clients.erase(fd);
-            std::cout << "Client disconnected: " << fd << std::endl;
+        } 
+        else {
+            SendRPL(fd, "464", clients[fd].getNick(), "Password incorrect.");
+            disconnectClient(fd);
             return;
         }
-
+    }
+    else if (it->compare("PING") == 0)
+    {
+        if (splitMsg.size() > 1) {
+            std::string response = ":" + ServerName + " PONG " + ServerName + " :" + *(it + 1);
+            sendToClient(fd, response);
+        } else {
+            // Handle malformed PING message
+            std::cerr << "Malformed PING message" << std::endl;
+        }
     }
 }
 void Server::HandleClientMessage(int clientFd)

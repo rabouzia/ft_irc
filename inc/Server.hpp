@@ -24,11 +24,14 @@ class Server {
 	    int epollFd;
 		int num;
 	    std::string _passwd;
+		std::string ServerName;
 	    std::map<int, Client> clients;
 		std::map<std::string, Channel> channel;
 	    void SetNonBlocking(int fd);
 	    void HandleNewConnection();
 	    void HandleClientMessage(int clientFd);
+		void disconnectClient(int fd);
+		void sendToClient(int fd, const std::string& response);
 
 	public:
 
