@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/05 21:57:55 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/05 22:20:29 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,7 +200,8 @@ void Server::ParsingData(std::string str, int ClientFD)
     }
 	else if ((it)->compare("NICK") == 0)
     {
-        if (clientImap[ClientFD]->GetPasswordVerified()) {
+        if (clientImap[ClientFD]->GetPasswordVerified()) 
+		{
 			if (!(it + 1)->empty())
 			{
 				std::string mess = ":" + *(it + 1) + " NICK " + *(it + 1) + "\r\n";
@@ -242,6 +243,7 @@ void Server::ParsingData(std::string str, int ClientFD)
 	else
         return;
 }
+
 
 // void Server::parseMessage(std::string message, int fd)
 // {   
