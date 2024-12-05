@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/03 20:55:43 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/05 17:09:16 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,12 +84,12 @@ void Server::Run()
         for (int i = 0; i < eventCount; ++i) {
             if (eventsClient[i].data.fd == serverSocket) 
             {
-                std::cout << "new user---->" << i <<std::endl;
+                std::cout << "new user---->" << eventsClient[i].data.fd <<std::endl;
                 HandleNewConnection();
             } 
             else if (eventsClient[i].events & EPOLLIN) 
             {
-                std::cout << "message client---->" << i <<std::endl;
+                std::cout << "message client---->" << eventsClient[i].data.fd <<std::endl;
                 HandleClientMessage(eventsClient[i].data.fd);
             }
         }
@@ -142,25 +142,27 @@ void Server::HandleNewConnection() {
 
     // Send a welcome message to the new client
     std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
-    Client newClient(clientSocket, (nickname + intToString(num++)));
+     Client *newClient = new Client (clientSocket, (nickname + intToString(num++)));
     clients[clientSocket] = newClient;
-    SendRPL(clientSocket, "001", clients[clientSocket].getNick(), "Welcome to the IRC network, " + clients[clientSocket].getNick() + "!");
+    SendRPL(clientSocket, "001", clients[clientSocket]->getNick(), "Welcome to the IRC network, " + clients[clientSocket]->getNick() + "!");
 }
 
 
-std::string cleanIrssiString(std::string inputString) {
-    // Suppression des caractères \r et \n
-    inputString.erase(
-        std::remove(inputString.begin(), inputString.end(), '\r'), 
-        inputString.end()
-    );
-    inputString.erase(
-        std::remove(inputString.begin(), inputString.end(), '\n'), 
-        inputString.end()
-    );
-    
+std::string replaceIrssiString(std::string inputString, char oldChar, char newChar) {
+    std::replace(inputString.begin(), inputString.end(), oldChar, newChar);
     return inputString;
 }
+std::string cleanIrssiString(std::string inputString, char c) {
+    // Suppression des caractères \r et \n
+    inputString.erase(
+        std::remove(inputString.begin(), inputString.end(), c), 
+        inputString.end()
+ 
+);
+     
+    return inputString;
+}
+
 
 
 
@@ -176,22 +178,51 @@ void Server::sendToClient(int fd, const std::string& message) {
     send(fd, message.c_str(), message.size(), 0);
 }
 
+void Server::irssiParsingData(std::vector<std::string>::iterator begin, int ClientFD)
+{
+	std::vector <std::string>::iterator it = begin;
+	if (it->compare("PASS") == 0)
+    {
+        if ((it + 1)->compare(_passwd.c_str()) == 0) {
+			std::cout << "Correct Password1\n";
+            clients[ClientFD]->setPasswordVerified(true);
+            std::cout << "Correct Password2\n";
+        } 
+        else {
+            SendRPL(ClientFD, "464", clients[ClientFD]->getNick(), "Password incorrect.");
+            disconnectClient(ClientFD);
+            return;
+        }
+    }
+	else
+	{
+		SendRPL(ClientFD, "464", clients[ClientFD]->getNick(), "Password incorrect.");
+        disconnectClient(ClientFD);
+        return;
+	}
+	
+}
+
 void Server::parseMessage(std::string message, int fd)
 {   
 
 
-    message = cleanIrssiString(message);
+    message = cleanIrssiString(message, '\r');
+	message = replaceIrssiString(message, '\n', ' ');
     std::vector<std::string> splitMsg  = split(message, ' ');
     std::vector <std::string>::iterator it = splitMsg.begin();
 
-    if (it->compare("PASS") == 0)
+	//std::cout << "Parse message " << *it << " " << *(it + 1) << " " << *(it + 2) << std::endl;
+	if (it->compare("CAP") == 0 && (it + 1)->compare("LS") == 0)
+		irssiParsingData((it + 2), fd);
+    else if (it->compare("PASS") == 0)
     {
         if ((it + 1)->compare(_passwd.c_str()) == 0) {
-            clients[fd].setPasswordVerified(true);
+            clients[fd]->setPasswordVerified(true);
             std::cout << "Correct Password\n";
         } 
         else {
-            SendRPL(fd, "464", clients[fd].getNick(), "Password incorrect.");
+            SendRPL(fd, "464", clients[fd]->getNick(), "Password incorrect.");
             disconnectClient(fd);
             return;
         }
@@ -199,7 +230,8 @@ void Server::parseMessage(std::string message, int fd)
     else if (it->compare("PING") == 0)
     {
         if (splitMsg.size() > 1) {
-            std::string response = ":" + ServerName + " PONG " + ServerName + " :" + *(it + 1);
+			std::cout << "PONG DANS TA MERE \n";
+            std::string response = ":" + ServerName + " PONG " + ServerName + " :" + *(it + 1) + "\r\n";
             sendToClient(fd, response);
         } else {
             // Handle malformed PING message
@@ -207,9 +239,9 @@ void Server::parseMessage(std::string message, int fd)
         }
     }
 }
+
 void Server::HandleClientMessage(int clientFd)
 {
-
     char buffer[1024];
     int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
     //std::cout << " =========================== " << buffer << std::endl;
@@ -226,7 +258,7 @@ void Server::HandleClientMessage(int clientFd)
     std::string message(buffer);
     parseMessage(message, clientFd);
 
-    std::cout << "Message from client " << clientFd << ": " << message << std::endl;
+   // std::cout << "Message from client " << clientFd << ": " << message << std::endl;
   
     // Echo the message back to the client for testing
 }
