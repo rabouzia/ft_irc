@@ -32,12 +32,26 @@ class Client{
 		int Socket;
 		sockaddr_in serverAddress;
 		sockaddr_in clientAddress;
+		std::string _nick;
+		bool InChannel;
 	public:
 		Client();
+		Client(int FD, std::string nick)
+		{
+			Socket = FD;
+			_nick =  nick;
+		}
 		~Client(){};
 		void Send();
 		void Connect();
-		void Accept();
+		std::string& getNick()
+		{
+			return _nick;
+		}
+		int getSocket()
+		{
+			return Socket;
+		}
 		void InitClient();
 
 };

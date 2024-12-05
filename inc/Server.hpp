@@ -11,7 +11,10 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstdlib>
+#include "Channel.hpp"
+#include "Client.hpp"
 
+class Client;
 class Server {
 
 	private:
@@ -19,8 +22,10 @@ class Server {
 	    int serverSocket;
 	    sockaddr_in serverAddress;
 	    int epollFd;
+		int num;
 	    std::string _passwd;
-	    std::map<int, std::string> clients;
+	    std::map<int, Client> clients;
+		std::map<std::string, Channel> channel;
 	    void SetNonBlocking(int fd);
 	    void HandleNewConnection();
 	    void HandleClientMessage(int clientFd);
@@ -33,6 +38,7 @@ class Server {
 	    void Bind();
 	    void Listen();
 	    void Run();
+		void parseMessage(std::string message, int fd);
 };
 
 #endif

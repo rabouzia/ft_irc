@@ -12,6 +12,10 @@
 
 
 #include "Server.hpp"
+#include"utils.hpp"
+#include <string.h>
+#include <vector>
+#include <algorithm>
 
 Server::Server(int port, const std::string &passwd) : _passwd(passwd)
 {
@@ -22,6 +26,7 @@ Server::Server(int port, const std::string &passwd) : _passwd(passwd)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
+    num = 0;
 }
 
 Server::~Server()
@@ -107,11 +112,21 @@ void SendRPL(int clientSocket, const std::string &replyCode, const std::string &
     }
 }
 
+
+
+#include <sstream>
+
+std::string intToString(int number) {
+    std::stringstream ss;
+    ss << number;
+    return ss.str();
+}
+
+
 void Server::HandleNewConnection() {
     sockaddr_in clientAddr;
     socklen_t clientAddrLen = sizeof(clientAddr);
     int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
-
     if (clientSocket == -1)
         throw std::runtime_error("Failed to accept new connection");
 
@@ -124,19 +139,62 @@ void Server::HandleNewConnection() {
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &event) == -1)
         throw std::runtime_error("Failed to add client socket to epoll");
 
-    clients[clientSocket] = ""; // Initialize client info
+    //clients[clientSocket] = ""; // Initialize client info
     std::cout << "New client connected: " << clientSocket << std::endl;
 
     // Send a welcome message to the new client
     std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
-    SendRPL(clientSocket, "001", nickname, "Welcome to the IRC network, " + nickname + "!");
+
+
+    Client  newClient(clientSocket, (nickname + intToString(num++)));
+    clients[clientSocket] = newClient;
+    SendRPL(clientSocket, "001", nickname, "Welcome to the IRC network, " + nickname + intToString(num) + "!");
 }
 
+
+std::string cleanIrssiString(std::string inputString) {
+    // Suppression des caractères \r et \n
+    inputString.erase(
+        std::remove(inputString.begin(), inputString.end(), '\r'), 
+        inputString.end()
+    );
+    inputString.erase(
+        std::remove(inputString.begin(), inputString.end(), '\n'), 
+        inputString.end()
+    );
+    
+    return inputString;
+}
+
+void Server::parseMessage(std::string message, int fd)
+{   
+
+
+    message = cleanIrssiString(message);
+    std::vector<std::string> splitMsg  = split(message, ' ');
+    std::vector <std::string>::iterator it = splitMsg.begin();
+    if (it->compare("PASS") == 0)
+    {
+        std::cout << *(it + 1) << std::endl;
+        if ((it + 1)->compare(_passwd.c_str()) == 0)
+            std::cout << "Correct Password\n";
+        else
+        {
+            close(fd);
+            epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
+            clients.erase(fd);
+            std::cout << "Client disconnected: " << fd << std::endl;
+            return;
+        }
+
+    }
+}
 void Server::HandleClientMessage(int clientFd)
 {
+
     char buffer[1024];
     int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-    std::cout << " =========================== " << buffer << std::endl;
+    //std::cout << " =========================== " << buffer << std::endl;
     // deco ou erreur
     if (bytesRead <= 0) {
         close(clientFd);
@@ -148,6 +206,7 @@ void Server::HandleClientMessage(int clientFd)
 
     buffer[bytesRead] = '\0';
     std::string message(buffer);
+    parseMessage(message, clientFd);
 
     std::cout << "Message from client " << clientFd << ": " << message << std::endl;
   
