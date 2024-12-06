@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/05 22:20:29 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/06 16:43:28 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -195,11 +195,13 @@ void Server::ParsingData(std::string str, int ClientFD)
         else {
             SendRPL(ClientFD, "464", clientImap[ClientFD]->getNick(), "Password incorrect.");
             disconnectClient(ClientFD);
+			throw std::exception();
             return;
         }
     }
 	else if ((it)->compare("NICK") == 0)
     {
+		std::cout << "Client fd ---->" << ClientFD << std::endl;
         if (clientImap[ClientFD]->GetPasswordVerified()) 
 		{
 			if (!(it + 1)->empty())
@@ -233,9 +235,12 @@ void Server::ParsingData(std::string str, int ClientFD)
 		{
 			std::cout << "FIND !!!\n";
 			std::ostringstream response;
-    		response << " PRIVMSG " << clientSmap[*(it +1)]->getNick() << " " << *(it + 2) << "\r\n";
+    		response << " PRIVMSG " << clientImap[ClientFD]->getNick() << " " << *(it + 2) << "\r\n";
+    		std::ostringstream response2 ;
+			response2 << " PRIVMSG " << clientImap[ClientFD]->getNick() << " " << *(it + 2) << "\r\n";
    			std::string responseStr = response.str();
 			send (clientSmap[*(it +1)]->getSocket(), responseStr.c_str() , responseStr.size(), 0);
+			send (clientImap[ClientFD]->getSocket(), responseStr.c_str() , responseStr.size(), 0);
 		}
 		// else
 			//send rpl error
@@ -282,5 +287,10 @@ void Server::HandleClientMessage(int clientFd)
     std::cout << " =========================== " << buff << std::endl;
 	std::vector<std::string> tabData = split(buff, '\n');
 	for (std::vector<std::string>::iterator it = tabData.begin(); it != tabData.end(); it++)
-		ParsingData(*it, clientFd);
+	{
+		try {  ParsingData(*it, clientFd);}
+		catch (...){ return;}
+		
+	}
+		
 }

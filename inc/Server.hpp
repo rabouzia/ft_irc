@@ -34,12 +34,6 @@ class Server {
 		void disconnectClient(int fd);
 		void sendToClient(int fd, const std::string& response);
 		void ParsingData(std::string str, int ClientFD);
-		int IsAclient(std::string& name)
-		{
-			if(clientSmap[name])
-				return clientSmap[name]->getSocket();
-			return -1;
-		}
 
 	public:
 
@@ -49,6 +43,12 @@ class Server {
 	    void Bind();
 	    void Listen();
 	    void Run();
+		int IsAclient(std::string& name)
+		{
+			if(clientSmap[name])
+				return clientSmap[name]->getSocket();
+			return -1;
+		}
 	
 };
 
