@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cmd.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
+/*   Updated: 2024/12/07 00:08:12 by abdmessa         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 
 #include "Server.hpp"
 #include <vector>
@@ -73,18 +85,24 @@ void Server::handlePingCommand(const std::vector<std::string>& data, int ClientF
 }
 
 // Handle "PRIVMSG" command
-void Server::handlePrivmsgCommand(const std::vector<std::string>& data, int ClientFD) {
+void Server::handlePrivmsgCommand( std::vector<std::string>& data, int ClientFD) {
     if (data.size() < 3) {
         SendRPL(ClientFD, "411", clientImap[ClientFD]->getNick(), ":No recipient or text provided");
         return;
     }
+    std::string message = "";
+    for (std::vector<std::string>::iterator it = data.begin(); it != data.end(); it++)
+    {
+        message += *it;
+        message += " ";
+    }
     const std::string &recipient = data[1];
-    const std::string &message = data[2];
     if (isAClient(recipient) == -1) {
         SendRPL(ClientFD, "401", clientImap[ClientFD]->getNick(), recipient + " :No such nick/channel");
         return;
     }
-    std::string response = "PRIVMSG " + recipient + " :" + message + "\r\n";
+    std::string response = " PRIVMSG " + recipient + " " + message + "\r\n";
+    std::cout << "Message sent :" << response << std::endl;
     send(clientSmap[recipient]->getSocket(), response.c_str(), response.size(), 0);
     send(clientImap[ClientFD]->getSocket(), response.c_str(), response.size(), 0);
 }
@@ -112,7 +130,7 @@ void Server::handleModeCommand(const std::vector<std::string>& data, int ClientF
         return;
     }
     const std::string &channelName = data[1];
-    
+
     if (!isChannel(channelName)) {
         SendRPL(ClientFD, "403", clientImap[ClientFD]->getNick(), channelName + " :No such channel");
         return;

@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/06 23:06:05 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/06 23:38:40 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,12 +34,15 @@ class Channel {
 	public:	
 
 		Channel(std::string name, std::string password, Client *);
-
-		// void modeFunction(bool sign);
-		// {
-		// 	//if ( flag = 1)
-				
-		// }
+		void AddClient(Client *user, std::string password)
+		{
+			if (_password != password)
+			{
+				//RPL MESSAGE
+				return ;
+			}
+			
+		}
 		void setInviteOnly(bool value, Client *OP) {
 			//RPL MESSAGE
 			std::cout << "\n je suis dans le i\n" << std::endl;
@@ -67,7 +70,6 @@ class Channel {
 
 			_password = value;
 		}
-
 		void clearPassword(Client *OP)
 		{
 			//RPL MESSAGE

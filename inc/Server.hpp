@@ -46,7 +46,7 @@ private:
     void handlePassCommand(const std::vector<std::string>& data, int ClientFD);
     void handleNickCommand(const std::vector<std::string>& data, int ClientFD);
     void handlePingCommand(const std::vector<std::string>& data, int ClientFD);
-    void handlePrivmsgCommand(const std::vector<std::string>& data, int ClientFD);
+    void handlePrivmsgCommand( std::vector<std::string>& data, int ClientFD);
     void handleJoinCommand(const std::vector<std::string>& data, int ClientFD);
     void handleModeCommand(const std::vector<std::string>& data, int ClientFD);
 
