@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/07 00:08:12 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 00:28:24 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,8 @@ void Server::parsingData(std::string& str, int ClientFD) {
         handleJoinCommand(data, ClientFD);
     } else if (command == "MODE") {
         handleModeCommand(data, ClientFD);
+    } else if (command == "PART") {
+        // to do
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
     }
@@ -107,8 +109,9 @@ void Server::handlePrivmsgCommand( std::vector<std::string>& data, int ClientFD)
     send(clientImap[ClientFD]->getSocket(), response.c_str(), response.size(), 0);
 }
 
-// Handle "JOIN" command
+
 void Server::handleJoinCommand(const std::vector<std::string>& data, int ClientFD) {
+    
     if (data.size() < 2) {
         SendRPL(ClientFD, "461", clientImap[ClientFD]->getNick(), "JOIN :Not enough parameters");
         return;
@@ -119,7 +122,9 @@ void Server::handleJoinCommand(const std::vector<std::string>& data, int ClientF
     if (!isChannel(channelName)) {
         channelSmap[channelName] = new Channel(channelName, pass, clientImap[ClientFD]);
         std::cout << "Created new channel: " << channelName << " with password: " << pass << std::endl;
-    } else {
+    } 
+    else {
+        // Send RPL
         std::cout << "Channel already exists: " << channelName << std::endl;
     }
 }
@@ -147,6 +152,9 @@ void Server::handleModeCommand(const std::vector<std::string>& data, int ClientF
 }
 
 void Server::handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD) {
+   
+    if (!channel->isOperator(ClientFD))
+        return;
     switch (mode) {
         case 'i': channel->setInviteOnly(addingMode, clientImap[ClientFD]); break;
         case 't': channel->setTopicRestricted(addingMode, clientImap[ClientFD]); break;

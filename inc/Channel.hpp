@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 00:10:06 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 00:26:10 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@ class Channel {
 
 	protected:
 
-		std::map<std::string, Client*> ClientMap;
-		std::map<std::string, Client*> OperatorMap;
+		std::map<int, Client*> ClientMap;
+		std::map<int, Client*> OperatorMap;
 		std::string _name;
 		std::string _password;
 		bool _inviteOnly;
@@ -43,6 +43,12 @@ class Channel {
 		// 	}
 			
 		// }
+		bool isOperator(int fd)
+		{
+			if (OperatorMap[fd])
+				return true;
+			return false;
+		}
 		void setInviteOnly(bool value, Client *OP) {
 			//RPL MESSAGE
 			std::cout << "\n je suis dans le i\n" << std::endl;
@@ -84,9 +90,11 @@ class Channel {
 			std::cout << "\n je suis dans le o\n" << std::endl;
 			if(!user)
 				return ;
-			if (OperatorMap[user->getNick()] )
+			if (OperatorMap[user->getSocket()] )
 				return ;
-			OperatorMap[user->getNick()] = user;
+			if (!ClientMap[user->getSocket()] )
+				return ;
+			OperatorMap[user->getSocket()] = user;
 		}
 		void removeOperator(Client *user, Client *OP)
 		{
@@ -95,7 +103,7 @@ class Channel {
 			(void)OP;
 			if(!user)
 				return ;
-			if (! OperatorMap[user->getNick()] )
+			if (!OperatorMap[user->getSocket()] )
 					return ;	
 		}
 
