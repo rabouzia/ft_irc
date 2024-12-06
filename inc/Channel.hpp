@@ -3,24 +3,114 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rabouzia <rabouzia@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/11/23 17:14:25 by rabouzia         ###   ########.fr       */
+/*   Updated: 2024/12/06 23:06:05 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#pragma once
 
 #include "Client.hpp"
 #include <map>
+#include <list>
 #include <string>
+
 class Client;
-class Channel{
+
+class Channel {
 
 	protected:
-		std::map<std::string, Client> ClientMap;
-		std::map<std::string, Client> OperatorMap;
+
+		std::map<std::string, Client*> ClientMap;
+		std::map<std::string, Client*> OperatorMap;
+		std::string _name;
+		std::string _password;
+		bool _inviteOnly;
+		bool _topicAllow; //true
+		bool _Islimit;
+		int limitUser;
+		
 
 	public:	
 
+		Channel(std::string name, std::string password, Client *);
+
+		// void modeFunction(bool sign);
+		// {
+		// 	//if ( flag = 1)
+				
+		// }
+		void setInviteOnly(bool value, Client *OP) {
+			//RPL MESSAGE
+			std::cout << "\n je suis dans le i\n" << std::endl;
+			(void)OP;
+			_inviteOnly = value; 
+		}
+		void setTopicRestricted(bool value, Client *OP) { 
+			//RPL MESSAGE
+			(void)OP;
+			std::cout << "\n je suis dans le t\n" << std::endl;
+			
+			_topicAllow = value; 
+		}
+		void setLimit(bool value, Client *OP) {
+			//RPL MESSAGE
+			(void)OP;
+			std::cout << "\n je suis dans le L\n" << std::endl;
+
+			_Islimit = value; 
+		}
+		void setPassword(std::string value, Client *OP)
+		{
+			//RPL MESSAGE
+			(void)OP;
+
+			_password = value;
+		}
+
+		void clearPassword(Client *OP)
+		{
+			//RPL MESSAGE
+			(void)OP;
+			std::cout << "\n je suis dans le K\n" << std::endl;
+
+			_password = "";
+		}
+		void addOperator(Client *user, Client *OP)
+		{
+			(void)OP;
+			std::cout << "\n je suis dans le o\n" << std::endl;
+			if(!user)
+				return ;
+			if (OperatorMap[user->getNick()] )
+				return ;
+			OperatorMap[user->getNick()] = user;
+		}
+		void removeOperator(Client *user, Client *OP)
+		{
+			std::cout << "\n je suis dans le o\n" << std::endl;
+			//RPL MESSAGE
+			(void)OP;
+			if(!user)
+				return ;
+			if (! OperatorMap[user->getNick()] )
+					return ;	
+		}
+
+		void setUserLimit(int num, Client *OP)
+		{
+			std::cout << "\n je suis dans le i\n" << std::endl;
+			//RPL MESSAGE
+			(void)OP;
+			limitUser =  num;
+			
+		}
+		void clearUserLimit(Client *OP)
+		{
+			std::cout << "\n je suis dans le i\n" << std::endl;
+
+			//RPL MESSAGE
+			(void)OP;
+			_Islimit = false;
+		}
 };

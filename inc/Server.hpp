@@ -14,42 +14,70 @@
 #include "Channel.hpp"
 #include "Client.hpp"
 
+// Pré-déclaration des classes pour éviter les inclusions circulaires
 class Client;
+class Channel;
+
 class Server {
+private:
+    // Attributs principaux
+    int serverSocket;
+    sockaddr_in serverAddress;
+    int epollFd;
+    int num;
+    std::string _passwd;
+    std::string serverName;
 
-	private:
+    // Maps pour gérer les clients et les channels
+    std::map<int, Client*> clientImap;                // Associe un FD à un client
+    std::map<std::string, Client*> clientSmap;        // Associe un pseudo à un client
+    std::map<std::string, Channel*> channelSmap;      // Associe un nom de channel à un Channel
 
-	    int serverSocket;
-	    sockaddr_in serverAddress;
-	    int epollFd;
-		int num;
-	    std::string _passwd;
-		std::string ServerName;
-	    std::map<int, Client*> clientImap;
-		std::map<std::string, Client*> clientSmap;
-		std::map<std::string, Channel> channel;
-	    void SetNonBlocking(int fd);
-	    void HandleNewConnection();
-	    void HandleClientMessage(int clientFd);
-		void disconnectClient(int fd);
-		void sendToClient(int fd, const std::string& response);
-		void ParsingData(std::string str, int ClientFD);
+    // Méthodes privées pour le fonctionnement interne
+    void setNonBlocking(int fd);
+    void handleNewConnection();
+    void handleClientMessage(int clientFd);
+    void disconnectClient(int fd);
+    void sendToClient(int fd, const std::string& response);
+	void SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message);
+    void parsingData(std::string& str, int clientFD);
 
-	public:
+    // Gestion des commandes IRC
+    void handlePassCommand(const std::vector<std::string>& data, int ClientFD);
+    void handleNickCommand(const std::vector<std::string>& data, int ClientFD);
+    void handlePingCommand(const std::vector<std::string>& data, int ClientFD);
+    void handlePrivmsgCommand(const std::vector<std::string>& data, int ClientFD);
+    void handleJoinCommand(const std::vector<std::string>& data, int ClientFD);
+    void handleModeCommand(const std::vector<std::string>& data, int ClientFD);
 
-	    Server(int port, const std::string &passwd);
-	    ~Server();
-	    void InitServer();
-	    void Bind();
-	    void Listen();
-	    void Run();
-		int IsAclient(std::string& name)
-		{
-			if(clientSmap[name])
-				return clientSmap[name]->getSocket();
-			return -1;
-		}
-	
+    // Helper pour les commandes MODE
+    void handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD);
+
+public:
+    // Constructeur et destructeur
+    Server(int port, const std::string &passwd);
+    ~Server();
+
+    // Méthodes principales
+    void initServer();
+    void bindServ();
+    void listenServ();
+    void run();
+
+    // Méthodes utilitaires
+    int isAClient(const std::string name)
+	{
+		if (clientSmap[name])
+			return 0;
+		return -1;
+	}
+    bool isChannel(const std::string& channel)
+	{
+		if (channelSmap[channel])
+			return true;
+		return false;
+	}
 };
 
-#endif
+std::vector<std::string> split (const std::string &s, char delim);
+#endif // SERVER_HPP

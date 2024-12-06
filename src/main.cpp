@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:45 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/03 17:55:22 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/06 21:44:15 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,10 @@ int main(int ac, char **av)
 
     try {
         Server server(port, passwd);
-        server.InitServer();
-        server.Bind();
-        server.Listen();
-        server.Run();
+        server.initServer();
+        server.bindServ();
+        server.listenServ();
+        server.run();
     } catch (const std::exception &e) {
         std::cerr << "Server failed: " << e.what() << std::endl;
         return 1;

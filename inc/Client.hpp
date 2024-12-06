@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/06 16:19:20 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/06 21:50:11 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ class Client{
 		sockaddr_in clientAddress;
 		std::string _nick;
 		bool psswdCheck;
-		bool InChannel;
+		bool _InChannel;
 
 	public:
 		Client(int FD, std::string nick)
@@ -45,13 +45,17 @@ class Client{
 		~Client(){};
 		void Send();
 		void Connect();
-		std::string& getNick()
+		std::string getNick() const 
 		{
 			return _nick;
 		}
-		void setNick(std::string& nick)
-		{_nick = nick;}
-		int getSocket()
+		void setNick(const std::string& nick)
+		{
+			_nick = nick;
+		}
+		void InChannel(bool status)
+		{_InChannel = status;}
+		int getSocket() const
 		{
 			return Socket;
 		}

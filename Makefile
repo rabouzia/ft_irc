@@ -3,7 +3,9 @@ NAME       =	ircserv
 SRC        =	src/main.cpp 		\
 				src/Server.cpp		\
 				src/Client.cpp		\
-				src/split.cpp
+				src/split.cpp		\
+				src/cmd.cpp		\
+				src/Channel.cpp
 
 CC 		   =	c++
 
