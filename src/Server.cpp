@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/06 21:53:41 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 16:03:10 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "Server.hpp"
 #include"utils.hpp"
 #include <string.h>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include "errmsg.hpp"
@@ -92,24 +93,17 @@ void Server::run()
 
         for (int i = 0; i < eventCount; ++i) {
             if (eventsClient[i].data.fd == serverSocket) 
-            {
                 handleNewConnection();
-            } 
             else if (eventsClient[i].events & EPOLLIN) 
-            {
                 handleClientMessage(eventsClient[i].data.fd);
-            }
         }
     }
 }
 
-
-#include <sstream>
-
 // Utility function to construct and send an IRC reply
 void Server::SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message) {
     std::ostringstream response;
-    response << ":server " << replyCode << " " << nickname << " :" << message << "\r\n";
+    response << ":server " << replyCode << " " << nickname << " " << message << "\r\n";
 
     std::string responseStr = response.str();
     if (send(clientSocket, responseStr.c_str(), responseStr.size(), 0) == -1) {
@@ -119,16 +113,11 @@ void Server::SendRPL(int clientSocket, const std::string &replyCode, const std::
     }
 }
 
-
-
-#include <sstream>
-
 std::string intToString(int number) {
     std::stringstream ss;
     ss << number;
     return ss.str();
 }
-
 
 void Server::handleNewConnection() {
     sockaddr_in clientAddr;
@@ -154,7 +143,6 @@ void Server::handleNewConnection() {
     SendRPL(clientSocket, "001", clientImap[clientSocket]->getNick(), "Welcome to the IRC network, " + clientImap[clientSocket]->getNick() + "!");
 }
 
-
 std::string replaceIrssiString(std::string inputString, char oldChar, char newChar) {
     std::replace(inputString.begin(), inputString.end(), oldChar, newChar);
     return inputString;
@@ -170,9 +158,6 @@ std::string cleanIrssiString(std::string inputString, char c) {
     return inputString;
 }
 
-
-
-
 void Server::disconnectClient(int fd) {
     clientImap.erase(fd);
     epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
@@ -185,7 +170,26 @@ void Server::sendToClient(int fd, const std::string& message) {
     send(fd, message.c_str(), message.size(), 0);
 }
 
-
+void Server::handleClientMessage(int clientFd)
+{
+    char buffer[1024];
+    int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+    if (bytesRead <= 0) {
+        disconnectClient(clientFd);
+        std::cout << "Client disconnected: " << clientFd << std::endl;
+        return;
+    }
+    buffer[bytesRead] = '\0';
+	std::string buff = cleanIrssiString(buffer, '\r');
+	std::vector<std::string> tabData = split(buff, '\n');
+	for (std::vector<std::string>::iterator it = tabData.begin(); it != tabData.end(); it++)
+	{
+		try {  parsingData(*it, clientFd);}
+		catch (...){ return;}
+		
+	}
+		
+}
 
 // void Server::ParsingData(std::string str, int ClientFD)
 // {
@@ -200,7 +204,7 @@ void Server::sendToClient(int fd, const std::string& message) {
 //             std::cout << "Correct Password\n";
 //         } 
 //         else {
-//             SendRPL(ClientFD, "464", clientImap[ClientFD]->getNick(), "Password incorrect.");
+            // SendRPL(ClientFD, "464", clientImap[ClientFD]->getNick(), "Password incorrect.");
 //             disconnectClient(ClientFD);
 // 			throw std::exception();
 //             return;
@@ -374,23 +378,4 @@ void Server::sendToClient(int fd, const std::string& message) {
     
 // }
 
-void Server::handleClientMessage(int clientFd)
-{
-    char buffer[1024];
-    int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-    if (bytesRead <= 0) {
-        disconnectClient(clientFd);
-        std::cout << "Client disconnected: " << clientFd << std::endl;
-        return;
-    }
-    buffer[bytesRead] = '\0';
-	std::string buff = cleanIrssiString(buffer, '\r');
-	std::vector<std::string> tabData = split(buff, '\n');
-	for (std::vector<std::string>::iterator it = tabData.begin(); it != tabData.end(); it++)
-	{
-		try {  parsingData(*it, clientFd);}
-		catch (...){ return;}
-		
-	}
-		
-}
+

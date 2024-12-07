@@ -39,7 +39,6 @@ private:
     void handleClientMessage(int clientFd);
     void disconnectClient(int fd);
     void sendToClient(int fd, const std::string& response);
-	void SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message);
     void parsingData(std::string& str, int clientFD);
 
     // Gestion des commandes IRC
@@ -49,6 +48,7 @@ private:
     void handlePrivmsgCommand( std::vector<std::string>& data, int ClientFD);
     void handleJoinCommand(const std::vector<std::string>& data, int ClientFD);
     void handleModeCommand(const std::vector<std::string>& data, int ClientFD);
+    void handleInviteCommand(const std::vector<std::string>& data, int ClientFD);
 
     // Helper pour les commandes MODE
     void handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD);
@@ -65,10 +65,11 @@ public:
     void run();
 
     // Méthodes utilitaires
+	void SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message);
     int isAClient(const std::string name)
 	{
 		if (clientSmap[name])
-			return 0;
+			return 1;
 		return -1;
 	}
     bool isChannel(const std::string& channel)

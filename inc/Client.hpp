@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/06 21:50:11 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 17:48:02 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@
 #include <unistd.h>     // Fonctions POSIX comme close()
 #include <string>
 #include <iostream>
-class Server;
 
+class Server;
 
 class Client{
 	
@@ -34,11 +34,13 @@ class Client{
 		std::string _nick;
 		bool psswdCheck;
 		bool _InChannel;
+		
 
 	public:
 		Client(int FD, std::string nick)
 		{
 			psswdCheck = false;
+			_InChannel = false;
 			Socket = FD;
 			_nick =  nick;
 		}
@@ -53,12 +55,9 @@ class Client{
 		{
 			_nick = nick;
 		}
-		void InChannel(bool status)
-		{_InChannel = status;}
-		int getSocket() const
-		{
-			return Socket;
-		}
+		void InChannel(bool status) {_InChannel = status;}
+		int getSocket() const {return Socket;}
+		bool getInChannel() const {return _InChannel;}
 		bool GetPasswordVerified();
 		void InitClient();
 		void setPasswordVerified(bool status);
