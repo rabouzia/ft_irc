@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/07 23:21:20 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 00:31:35 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,6 @@ void Server::handlePingCommand(const std::vector<std::string>& data, int ClientF
     sendToClient(ClientFD, response);
 }
 
-// Handle "PRIVMSG" command
 // Handle "PRIVMSG" command
 void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) {
     if (data.size() < 3) {

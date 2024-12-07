@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:37 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 18:41:38 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 00:35:25 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void Channel::addClient(Client *user, const std::string& password) {
     {
         if(!isInWhiteList(user->getSocket()))
         {
-            //rpl
+            server->SendRPL(user->getSocket(), "473", user->getNick(), _name + " :Cannot join channel (+i)");
             return;
         }
     }
