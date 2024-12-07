@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:37 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 18:38:07 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 18:41:38 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,6 @@ void Channel::addClient(Client *user, const std::string& password) {
         //std::cout << "User " << user->getNick() << " is already in the channel: " << _name << std::endl;
         return;
     }
-
     ClientMap[user->getSocket()] = user;
     std::cout << "User " << user->getNick() << " joined the channel: " << _name << std::endl;
 

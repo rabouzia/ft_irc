@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 18:34:33 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 23:02:44 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ class Channel {
 		Server *server;
 		std::string _name;
 		std::string _password;
+		std::string _topic;
 		bool _inviteOnly;
 		bool _topicAllow; //true
 		bool _Islimit;
@@ -56,6 +57,8 @@ class Channel {
 				return true;
 			return false;
 		}
+		std::string getTopic() { return (this->_topic); };
+		void setTopic(const std::string& newTopic) { _topic = newTopic;}
 
 		void setInviteOnly(bool value, Client *OP) {
 			//RPL MESSAGE

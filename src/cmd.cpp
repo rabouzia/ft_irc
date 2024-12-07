@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/07 18:23:46 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/07 23:21:20 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,12 +34,42 @@ void Server::parsingData(std::string& str, int ClientFD) {
         handleModeCommand(data, ClientFD);
     } else if (command == "PART") {
         // to do
+    } else if (command == "TOPIC") {
+        handleTopicCommand(data, ClientFD);
     } else if (command == "INVITE") {
         handleInviteCommand(data, ClientFD);
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
     }
 }
+
+// TOPIC #test :coucou
+void Server::handleTopicCommand(const std::vector<std::string>& data, int ClientFD) {
+    if (data.size() < 3) {
+        SendRPL(ClientFD, "461", clientImap[ClientFD]->getNick(), "TOPIC :Not enough parameters");
+        return;
+    }
+
+    const std::string& channelName = data[1];
+    Channel* channel = NULL;
+
+    std::map<std::string, Channel*>::iterator it = channelSmap.find(channelName);
+    if (it == channelSmap.end()) {
+        SendRPL(ClientFD, "403", clientImap[ClientFD]->getNick(), channelName + " :No such channel");
+        return;
+    }
+    channel = it->second;
+    if (!channel->isOperator(clientImap[ClientFD]->getSocket())) {
+        SendRPL(ClientFD, "482", clientImap[ClientFD]->getNick(), channelName + " :You're not channel operator");
+        return;
+    }
+    std::string newTopic = data[2].substr(1); 
+    channel->setTopic(newTopic);
+    SendRPL(ClientFD, "332", clientImap[ClientFD]->getNick(), channelName + " :" + newTopic);
+    std::cout << "Topic for channel " << channelName << " set to: " << newTopic << std::endl;
+}
+
+
 
 void Server::handlePassCommand(const std::vector<std::string>& data, int ClientFD) {
     if (data.size() < 2) {
@@ -104,30 +134,25 @@ void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) 
 
     const std::string &recipient = data[1];
 
-    std::cout << "\n==================== this is the value of => " << data[1] << "\n\n";
+    // std::cout << "\n==================== this is the value of => " << data[1] << "\n\n";
 
     if (data[1][0] == '#') {  
         std::string channelName = data[1];
-        std::cout << "\n==================== LE CHANNEL EST => " << channelName << "\n\n";
-
         std::cout << "List of channels in channelSmap: ";
         for (std::map<std::string, Channel*>::iterator it = channelSmap.begin(); it != channelSmap.end(); ++it) {
             std::cout << it->first << " ";
         }
-        std::cout << "\n";
-
+        std::cout << "\n";  
         std::map<std::string, Channel*>::iterator it = channelSmap.find(channelName);
         if (it == channelSmap.end()) {
             std::cout << "Try to find ---->" << channelName << std::endl;
             SendRPL(ClientFD, "403", clientImap[ClientFD]->getNick(), channelName + " :No such channel");
             return;
-        }
-
+        }   
         Channel* channel = it->second;
         std::string response = ":" + clientImap[ClientFD]->getNick() + " PRIVMSG " + recipient + " :" + message + "\r\n";
-        std::cout << "Message sent to channel: " << response << std::endl;
-
- 
+        std::cout << "Message sent to channel: " << response << std::endl;  
+    
         std::map<int, Client*>& clientMap = channel->getClientMap();
         if (clientMap.empty()) {
             std::cout << "No clients in channel: " << channelName << std::endl;
