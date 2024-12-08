@@ -19,7 +19,6 @@ SRCS       =    $(SRC)
 
 OBJ 	   =    $(patsubst src/%.cpp, $(OBJ_DIR)%.o, $(SRCS))
 
-DEP 	   =    $(patsubst src/%.cpp, $(OBJ_DIR)%.d, $(SRCS))
 
 MAKE_DIR   =    mkdir -p
 
@@ -27,7 +26,7 @@ SMAKE	   =    make --no-print-directory
 
 all:	        $(NAME)
 
-$(NAME):        $(OBJ) $(DEP)
+$(NAME):        $(OBJ)
 				@$(CC) $(CFLAGS) $(OFLAG) $(OBJ) -o $@
 				
 $(OBJ_DIR)%.o:  src/%.cpp
@@ -35,7 +34,7 @@ $(OBJ_DIR)%.o:  src/%.cpp
 			    @$(CC) $(CFLAGS) $(OFLAG) -c $< -o $@ 
 
 clean:
-				@rm -rf $(OBJ_DIR) $(DEP)
+				@rm -rf $(OBJ_DIR)
 				@echo "\033[1;31m======== irc object files removed ========\033[0m"
 
 fclean:         clean

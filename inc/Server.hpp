@@ -27,7 +27,7 @@ private:
     int num;
     std::string _passwd;
     std::string serverName;
-
+    std::string _old_buf;
     // Maps pour gérer les clients et les channels
     std::map<int, Client*> clientImap;                // Associe un FD à un client
     std::map<std::string, Client*> clientSmap;        // Associe un pseudo à un client
@@ -42,6 +42,7 @@ private:
     void parsingData(std::string& str, int clientFD);
 
     // Gestion des commandes IRC
+    void handlePartCommand(const std::vector<std::string>& data, int ClientFD);
     void handleKickCommand(const std::vector<std::string>& data, int ClientFD);
     void handlePassCommand(const std::vector<std::string>& data, int ClientFD);
     void handleNickCommand(const std::vector<std::string>& data, int ClientFD);

@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/08 17:15:09 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 22:06:40 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ class Channel {
 		bool _topicAllow; //true
 		bool _Islimit;
 		int limitUser;
+		int nbLimit;
 		std::vector<int> whiteListe;
 		
 
@@ -47,10 +48,14 @@ class Channel {
 		bool isInWhiteList(int ClientFD);
 
 		void Invite(int sock, Client *user);
+		void decrementNbLimit() { this->nbLimit--; }
 		void del(int user)
 		{
-			ClientMap[user]->InChannel(false);
-			ClientMap.erase(user);
+			if (ClientMap[user])
+			{
+				ClientMap[user]->InChannel(false);
+				ClientMap.erase(user);
+			}
 		}
 		bool isOperator(int fd)
 		{
@@ -135,24 +140,27 @@ class Channel {
 
 		void setUserLimit(int num, Client *OP)
 		{
-			std::cout << "\n je suis dans le i\n" << std::endl;
+			std::cout << "\n je suis dans le l\n" << std::endl;
 			//RPL MESSAGE
 			(void)OP;
 			limitUser =  num;
-			
+			_Islimit = true;
 		}
 		void clearUserLimit(Client *OP)
 		{
-			std::cout << "\n je suis dans le i\n" << std::endl;
-
+			std::cout << "\n je suis dans le -l\n" << std::endl;
 			//RPL MESSAGE
 			(void)OP;
 			_Islimit = false;
 		}
 		int isAClient(int fd)
 		{
-			if (ClientMap[fd])
+			if (ClientMap.find(fd) != ClientMap.end())
+			{
+				std::cout << fd << "IS ----->" "find\n";
 				return 1;
+			}
+			std::cout << fd << "IS ----->" " not find\n";
 			return 0;
 		}
 		std::string getName(){return _name;}

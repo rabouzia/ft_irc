@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:37 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/08 17:40:25 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 22:02:02 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,18 @@ Channel::Channel(std::string name, std::string password, Client *client, Server 
 	client->InChannel(true);
 	this->_topicAllow = true;
 	this->server = server;
+    this->_Islimit = false;
+    this->nbLimit = 0;
 	
 }
 
 int Channel::addClient(Client *user, const std::string& password) {
 
+    if (_Islimit == true && nbLimit >= limitUser)
+    {
+        server->SendRPL(user->getSocket(), "471", user->getNick(), _name + " :Cannot join channel (+l)");
+        return 0;
+    }
     if (_inviteOnly == false)
     {
         if ( !_password.empty() && _password != password) {
@@ -40,25 +47,24 @@ int Channel::addClient(Client *user, const std::string& password) {
             return 0;
         }
     }
-    if (ClientMap.count(user->getSocket())) {
+    if (ClientMap[user->getSocket()]) {
 
         // server->SendRPL(user->getSocket(), "443", user->getNick(), _name + " :is already on channel");
         //std::cout << "User " << user->getNick() << " is already in the channel: " << _name << std::endl;
-        return 1;
+        return 0;
     }
-    else {
-        ClientMap[user->getSocket()] = user;
-        std::cout << "User " << user->getNick() << " joined the channel: " << _name << std::endl;
-       
-
-        std::string joinMessage = ":" + user->getNick() + " JOIN " + _name + "\r\n";
-        for (std::map<int, Client*>::iterator it = ClientMap.begin(); it != ClientMap.end(); ++it) {
-            if (it->first != user->getSocket()) {
-                send(it->first, joinMessage.c_str(), joinMessage.size(), 0);
-            }
+    
+    ClientMap[user->getSocket()] = user;
+    std::cout << "User " << user->getNick() << " joined the channel: " << _name << std::endl;
+    this->nbLimit++;
+    std::string joinMessage = ":" + user->getNick() + " JOIN " + _name + "\r\n";
+    for (std::map<int, Client*>::iterator it = ClientMap.begin(); it != ClientMap.end(); ++it) {
+        if (it->first != user->getSocket()) {
+            send(it->first, joinMessage.c_str(), joinMessage.size(), 0);
         }
-        return 1;
     }
+    return 1;
+
 }
 
 
