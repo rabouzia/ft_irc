@@ -42,6 +42,7 @@ private:
     void parsingData(std::string& str, int clientFD);
 
     // Gestion des commandes IRC
+    void handleKickCommand(const std::vector<std::string>& data, int ClientFD);
     void handlePassCommand(const std::vector<std::string>& data, int ClientFD);
     void handleNickCommand(const std::vector<std::string>& data, int ClientFD);
     void handlePingCommand(const std::vector<std::string>& data, int ClientFD);

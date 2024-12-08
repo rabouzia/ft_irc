@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 23:02:44 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 17:15:09 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ class Channel {
 	public:	
 
 		Channel(std::string name, std::string password, Client *, Server *);
-		void addClient(Client *user, const std::string& password);
+		int addClient(Client *user, const std::string& password);
 		std::string getPassword() { return (this->_password); }
 		std::map<int, Client*>& getClientMap() {return ClientMap;}
 		void addWhiteList(int ClientFD);
@@ -49,7 +49,8 @@ class Channel {
 		void Invite(int sock, Client *user);
 		void del(int user)
 		{
-			ClientMap.erase(user);	
+			ClientMap[user]->InChannel(false);
+			ClientMap.erase(user);
 		}
 		bool isOperator(int fd)
 		{
