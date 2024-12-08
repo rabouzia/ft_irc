@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/08 17:29:28 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/08 18:05:09 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,11 +184,6 @@ void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) 
             return;
         }   
         Channel* channel = it->second;
-        if (channel->isAClient(ClientFD) == 0)
-        {
-            SendRPL(ClientFD, "404", clientImap[ClientFD]->getNick(), channel->getName() + " :Cannot send to channel");
-            return;
-        }
         std::string response = ":" + clientImap[ClientFD]->getNick() + " PRIVMSG " + recipient + " :" + message + "\r\n";
         std::cout << "Message sent to channel: " << response << std::endl;  
     
