@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cmd.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 01:10:35 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 16:50:09 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,22 @@ class Server;
 
 void Server::parsingData(std::string& str, int ClientFD) {
     // Trim leading and trailing whitespace
-    std::cout << str << std::endl;
-    // Skip empty messages
     if (str.empty()) return;
 
     std::vector<std::string> data = split(str, ' ');
+	for (std::vector<std::string>::iterator it  = data.begin(); it != data.end(); it++)
+	{
+		str = *it;
+		for (size_t i = 0; i < str.length(); i++)
+		{
+			std::cout << "|" << str[i] << "|" << "   |" << static_cast<int>(str[i]) << "|" << std::endl; 
+		}
+		std::cout << "------------------------------------------------------" << std::endl;
+	}
+	std::cout << "------------------------------------------------------" << std::endl;
+	std::cout  << std::endl;
+	std::cout  << std::endl;
+	std::cout << "------------------------------------------------------" << std::endl;
     if (data.empty()) return;
 
     const std::string &command = data[0];
@@ -51,47 +62,6 @@ void Server::parsingData(std::string& str, int ClientFD) {
     }
 }
 
-
-// void Server::parsingData(std::string& str, int ClientFD) {
-
-
-//     if (!_old_buf.empty())
-//     {
-//         std::string tmp;
-//         tmp = str;
-//         str = _old_buf + tmp;
-//         if (std::strchr(tmp.c_str(), '\r') != NULL && std::strchr(tmp.c_str(), '\n') != NULL)
-//             _old_buf = "";
-//         std::cout << str << std::endl;
-//     }
-//     std::vector<std::string> data = split(str, ' ');
-//     if (data.empty()) return;
-
-//     const std::string &command = data[0];
-//     if (command == "PASS") {
-//         handlePassCommand(data, ClientFD);
-//     } else if (command == "NICK") {
-//         handleNickCommand(data, ClientFD);
-//     } else if (command == "PING") {
-//         handlePingCommand(data, ClientFD);
-//     } else if (command == "PRIVMSG") {
-//         handlePrivmsgCommand(data, ClientFD);
-//     } else if (command == "JOIN") {
-//         handleJoinCommand(data, ClientFD);
-//     } else if (command == "MODE") {
-//         handleModeCommand(data, ClientFD);
-//     } else if (command == "KICK") {
-//         handleKickCommand(data, ClientFD);
-//     } else if (command == "TOPIC") {
-//         handleTopicCommand(data, ClientFD);
-//     } else if (command == "INVITE") {
-//         handleInviteCommand(data, ClientFD);
-//     } else if (command == "PART") {
-//         handlePartCommand(data, ClientFD);
-//     } else {
-//         std::cerr << "Unknown command: " << command << std::endl;
-//     }
-// }
 
 void Server::handlePartCommand(const std::vector<std::string>& data, int ClientFD) {
     (void)data;
@@ -244,14 +214,37 @@ void Server::handleNickCommand(const std::vector<std::string>& data, int ClientF
         SendRPL(ClientFD, "433", "", ":Password not verified");
         return;
     }
-   	std::string newNick = data[1];
-    clientSmap.erase(clientImap[ClientFD]->getNick());
+
+    std::string newNick = data[1];
+
+    // Validate nickname (example: no spaces, max 9 characters, etc.)
+    if (newNick.empty() || newNick.length() > 9 || newNick.find(' ') != std::string::npos) {
+        SendRPL(ClientFD, "432", "", ":Erroneous nickname");
+        return;
+    }
+
+    // Check if the nickname is already in use
+    if (clientSmap.find(newNick) != clientSmap.end()) {
+        SendRPL(ClientFD, "433", "", ":Nickname is already in use");
+        return;
+    }
+
+    // Update nickname
+    std::string oldNick = clientImap[ClientFD]->getNick();
+    clientSmap.erase(oldNick);
     clientImap[ClientFD]->setNick(newNick);
     clientSmap[newNick] = clientImap[ClientFD];
-    std::cout << "Nickname set to " << newNick << std::endl;
 
-    std::string message = ":" + newNick + " NICK " + newNick + "\r\n";
-    send(ClientFD, message.c_str(), message.size(), 0);
+    // Notify the user and broadcast to others in shared channels
+    std::string message = ":" + oldNick + "!user@host NICK :" + newNick + "\r\n";
+    send(ClientFD, message.c_str(), message.size(), 0); // Notify the client
+
+    // Broadcast to others in the same channels
+    // std::vector<std::string> clientChannels = clientImap[ClientFD]->getChannels();
+    // for (std::vector<std::string>::iterator it = clientChannels.begin(); it != clientChannels.end(); ++it) {
+    //     broadcastToChannel(*it, message, ClientFD);
+    // }
+    std::cout << "Nickname changed from " << oldNick << " to " << newNick << std::endl;
 }
 
 // Handle "PING" command

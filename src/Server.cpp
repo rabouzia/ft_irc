@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 01:19:42 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 16:37:38 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,18 +211,27 @@ void Server::handleClientMessage(int clientFd) {
         return;
     }
     std::cout << "ByteRead ----> " <<  static_cast<int> (buffer[bytesRead - 1])  <<  static_cast<int> (buffer[bytesRead]) << std::endl;
-    if (buffer[bytesRead -1 ] != '\n')
+    buffer[bytesRead] = '\0';
+	if (buffer[bytesRead -1 ] != '\n' && buffer[bytesRead - 2] != '\r')
     {
         std::cout << buffer[bytesRead - 1] << std::endl;
-        _old_buf += buffer;
+		if (_old_buf.empty())
+			_old_buf = buffer;
+		else
+        	_old_buf += buffer;
         return ;
     }
-    completeMessage += _old_buf; 
+    completeMessage = _old_buf; 
     completeMessage += buffer;
     _old_buf = "";
     std::cout << "Received message: " << completeMessage << std::endl;
     completeMessage = cleanIrssiString(completeMessage, '\r');
-    completeMessage = cleanIrssiString(completeMessage, '\n');
-    parsingData(completeMessage, clientFd);
+	completeMessage[completeMessage.size()] = '\0';
+	std::vector<std::string> data = split(completeMessage, '\n');
+    for (std::vector<std::string>::iterator it = data.begin(); it != data.end(); it++)
+	{
+		*it = cleanIrssiString(*it, '\n');
+    	parsingData(*it, clientFd);
+	}
   
 }
