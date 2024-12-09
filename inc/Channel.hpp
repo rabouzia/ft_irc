@@ -3,168 +3,195 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/09 01:27:53 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 19:42:38 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CHANNEL_HPP 
-#define CHANNEL_HPP  
+#ifndef CHANNEL_HPP
+# define CHANNEL_HPP
 
-#include "Client.hpp"
-#include <map>
-#include <list>
-#include <string>
-#include "Server.hpp"
+# include "Client.hpp"
+# include "Server.hpp"
+# include <list>
+# include <map>
+# include <string>
+# include <cstring>
+# include <sstream>
 
-class Client;
 
-class Channel {
+class	Client;
 
-	protected:
-		std::map<int, Client*> ClientMap;
-		std::map<int, Client*> OperatorMap;
-		Server *server;
-		std::string _name;
-		std::string _password;
-		std::string _topic;
-		bool _inviteOnly;
-		bool _topicAllow;
-		bool _Islimit;
-		int limitUser;
-		int nbLimit;
-		std::vector<int> whiteListe;
-		
+class Channel
+{
+  protected:
+	std::map<int, Client *> ClientMap;
+	std::map<int, Client *> OperatorMap;
+	Server *server;
+	std::string _name;
+	std::string _password;
+	std::string _topic;
+	bool _inviteOnly;
+	bool _topicAllow;
+	bool _Islimit;
+	int limitUser;
+	int nbLimit;
+	std::vector<int> whiteListe;
 
-	public:	
+  public:
+	Channel(std::string name, std::string password, Client *, Server *);
+	int addClient(Client *user, const std::string &password);
+	std::string getPassword()
+	{
+		return (this->_password);
+	}
+	std::map<int, Client *> &getClientMap()
+	{
+		return (ClientMap);
+	}
+	void addWhiteList(int ClientFD);
+	bool isInWhiteList(int ClientFD);
 
-		Channel(std::string name, std::string password, Client *, Server *);
-		int addClient(Client *user, const std::string& password);
-		std::string getPassword() { return (this->_password); }
-		std::map<int, Client*>& getClientMap() {return ClientMap;}
-		void addWhiteList(int ClientFD);
-		bool isInWhiteList(int ClientFD);
-
-		void Invite(int sock, Client *user);
-		void decrementNbLimit() { this->nbLimit--; }
-		void del(int user)
+	void Invite(int sock, Client *user);
+	void decrementNbLimit()
+	{
+		this->nbLimit--;
+	}
+	void del(int user)
+	{
+		if (ClientMap[user])
 		{
-			if (ClientMap[user])
-			{
-				ClientMap[user]->InChannel(false);
-				ClientMap.erase(user);
-			}
+			ClientMap[user]->InChannel(false);
+			ClientMap.erase(user);
 		}
-		bool isOperator(int fd)
+	}
+	bool isOperator(int fd)
+	{
+		if (OperatorMap[fd])
+			return (true);
+		return (false);
+	}
+	std::string getTopic()
+	{
+		return (this->_topic);
+	};
+	void setTopic(const std::string &newTopic)
+	{
+		_topic = newTopic;
+	}
+
+	void setInviteOnly(bool value, Client *OP)
+	{
+		std::string status = value ? "+i" : "-i";
+		std::string message = ":" + OP->getNick() + " MODE " + getName() + " " + status + "\r\n";
+		send(OP->getSocket(), message.c_str(), message.size(), 0);
+		_inviteOnly = value;
+	}
+
+	void setTopicRestricted(bool value, Client *OP)
+	{
+		_topicAllow = value;
+		if (OP)
 		{
-			if (OperatorMap[fd])
-				return true;
-			return false;
+			std::string status = value ? "+t" : "-t";
+			std::string message = ":" + OP->getNick() + " MODE " + getName() + " " + status + "\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
-		std::string getTopic() { return (this->_topic); };
-		void setTopic(const std::string& newTopic) { _topic = newTopic;}
-
-		void setInviteOnly(bool value, Client *OP) {
-			//RPL MESSAGE
-			std::cout << "\n je suis dans le i\n" << std::endl;
-			(void)OP;
-			_inviteOnly = value;
-			std::cout << " value of invite boolean => " << this->_inviteOnly << std::endl;
-		}
-
-		void setTopicRestricted(bool value, Client *OP) { 
-			//RPL MESSAGE
-			(void)OP;
-			std::cout << "\n je suis dans le t\n" << std::endl;
-			
-			_topicAllow = value; 
-			std::cout << " value of topic boolean => " << this->_topicAllow << std::endl;
-
-		}
-
-		void setLimit(bool value, Client *OP) {
-			//RPL MESSAGE
-			(void)OP;
-			std::cout << "\n je suis dans le L\n" << std::endl;
-
-			_Islimit = value; 
-			std::cout << " value of limit boolean => " << this->_Islimit << std::endl;
-
-		}
-
-		void setPassword(std::string value, Client *OP)
+		if (OP)
 		{
-			//RPL MESSAGE
-			(void)OP;
-
-			_password = value;
+			std::string status = value ? "+l" : "-l";
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + " " + status + " :Limit mode " +
+				(value ? "enabled" : "disabled") + "\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
+	}
 
-		void clearPassword(Client *OP)
+
+
+	void setPassword(std::string value, Client *OP)
+	{
+		_password = value;
+
+		if (OP)
 		{
-			//RPL MESSAGE
-			(void)OP;
-			std::cout << "\n je suis dans le K\n" << std::endl;
-
-			_password = "";
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + "+k :Password set\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
+	}
 
-		void addOperator(Client *user, Client *OP)
+	void clearPassword(Client *OP)
+	{
+		_password = "";
+		if (OP)
 		{
-			(void)OP;
-			std::cout << "\n je suis dans le o\n" << std::endl;
-			if(!user)
-				return ;
-			if (OperatorMap[user->getSocket()] )
-				return ;
-			if (!ClientMap[user->getSocket()] )
-				return ;
-			OperatorMap[user->getSocket()] = user;
-			std::cout << " New operator => " << user->getNick() << std::endl;
-
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + "-k :Password cleared\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
+	}
 
-		void removeOperator(Client *user, Client *OP)
+	void addOperator(Client *user, Client *OP)
+	{
+		if (!user || OperatorMap[user->getSocket()])
+			return ;
+		OperatorMap[user->getSocket()] = user;
+		std::cout << "New operator => " << user->getNick() << std::endl;
+		if (OP)
 		{
-			std::cout << "\n je suis dans le o\n" << std::endl;
-			//RPL MESSAGE
-			(void)OP;
-			if(!user)
-				return ;
-			if (!OperatorMap[user->getSocket()] )
-				return ;
-			OperatorMap.erase(user->getSocket());
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + "+o :Operator " + user->getNick() + " added\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
+	}
 
-		void setUserLimit(int num, Client *OP)
+	void removeOperator(Client *user, Client *OP)
+	{
+		if (!user || OperatorMap.find(user->getSocket()) == OperatorMap.end())
+			return ;
+		OperatorMap.erase(user->getSocket());
+		std::cout << "Operator removed => " << user->getNick() << std::endl;
+		if (OP)
 		{
-			std::cout << "\n je suis dans le l\n" << std::endl;
-			//RPL MESSAGE
-			(void)OP;
-			limitUser =  num;
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + "-o :Operator " + user->getNick() + " removed\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
+		}
+	}
+	void setUserLimit(int num, Client *OP)
+	{
+			limitUser = num;
 			_Islimit = true;
-		}
-		void clearUserLimit(Client *OP)
-		{
-			std::cout << "\n je suis dans le -l\n" << std::endl;
-			//RPL MESSAGE
-			(void)OP;
-			_Islimit = false;
-		}
-		int isAClient(int fd)
-		{
-			if (ClientMap.find(fd) != ClientMap.end())
+			if (OP)
 			{
-				std::cout << fd << "IS ----->" "find\n";
-				return 1;
+				std::stringstream ss;
+				ss << num;
+				std::string message = ":" + OP->getNick() + " 324 " + getName() + " +l " + ss.str() + " :User limit set\r\n";
+				send(OP->getSocket(), message.c_str(), message.size(), 0);
 			}
-			std::cout << fd << "IS ----->" " not find\n";
-			return 0;
-		}
-		std::string getName(){return _name;}
 		
+	}
+	
+	void clearUserLimit(Client* OP) 
+	{
+		_Islimit = false;
+
+		if (OP) 
+		{
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + " -l :User limit cleared\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
+    	}
+	}
+
+	int isAClient(int fd)
+	{
+		if (ClientMap.find(fd) != ClientMap.end())
+			return (1);
+		return (0);
+	}
+	std::string getName()
+	{
+		return (_name);
+	}
+
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 16:37:38 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/09 19:59:47 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,10 +228,17 @@ void Server::handleClientMessage(int clientFd) {
     completeMessage = cleanIrssiString(completeMessage, '\r');
 	completeMessage[completeMessage.size()] = '\0';
 	std::vector<std::string> data = split(completeMessage, '\n');
-    for (std::vector<std::string>::iterator it = data.begin(); it != data.end(); it++)
-	{
-		*it = cleanIrssiString(*it, '\n');
-    	parsingData(*it, clientFd);
-	}
-  
+   try{
+		for (std::vector<std::string>::iterator it = data.begin(); it != data.end(); it++)
+		{
+			*it = cleanIrssiString(*it, '\n');
+			parsingData(*it, clientFd);
+		}
+	
+   }
+   catch(...)
+   {
+	   return ;
+   }
+   
 }

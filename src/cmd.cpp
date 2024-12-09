@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 16:50:09 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/09 20:01:39 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,7 +201,7 @@ void Server::handlePassCommand(const std::vector<std::string>& data, int ClientF
     } else {
         SendRPL(ClientFD, "464", "", "Password incorrect.");
         disconnectClient(ClientFD);
-        throw std::exception();
+		throw std::exception();
     }
 }
 
@@ -210,7 +210,7 @@ void Server::handleNickCommand(const std::vector<std::string>& data, int ClientF
         SendRPL(ClientFD, "461", "", "NICK :Not enough parameters");
         return;
     }
-    if (!clientImap[ClientFD]->GetPasswordVerified()) {
+    if (clientImap[ClientFD] && !clientImap[ClientFD]->GetPasswordVerified()) {
         SendRPL(ClientFD, "433", "", ":Password not verified");
         return;
     }
@@ -234,16 +234,8 @@ void Server::handleNickCommand(const std::vector<std::string>& data, int ClientF
     clientSmap.erase(oldNick);
     clientImap[ClientFD]->setNick(newNick);
     clientSmap[newNick] = clientImap[ClientFD];
-
-    // Notify the user and broadcast to others in shared channels
     std::string message = ":" + oldNick + "!user@host NICK :" + newNick + "\r\n";
     send(ClientFD, message.c_str(), message.size(), 0); // Notify the client
-
-    // Broadcast to others in the same channels
-    // std::vector<std::string> clientChannels = clientImap[ClientFD]->getChannels();
-    // for (std::vector<std::string>::iterator it = clientChannels.begin(); it != clientChannels.end(); ++it) {
-    //     broadcastToChannel(*it, message, ClientFD);
-    // }
     std::cout << "Nickname changed from " << oldNick << " to " << newNick << std::endl;
 }
 
@@ -424,9 +416,7 @@ void Server::handleInviteCommand(const std::vector<std::string>& data, int Clien
             return;
         }
     }
-    
     const std::string &InviteName = data[1];
-
     if (isAClient(InviteName) == -1) {
         SendRPL(ClientFD, "401", clientImap[ClientFD]->getNick(), InviteName + " :No such nick");
         return;
