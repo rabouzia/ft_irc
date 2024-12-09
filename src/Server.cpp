@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 00:49:37 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 01:19:42 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,7 +210,7 @@ void Server::handleClientMessage(int clientFd) {
         disconnectClient(clientFd);
         return;
     }
-    std::cout << "ByteRead" <<  static_cast<int> (buffer[bytesRead - 1])  <<  static_cast<int> (buffer[bytesRead]) << std::endl;
+    std::cout << "ByteRead ----> " <<  static_cast<int> (buffer[bytesRead - 1])  <<  static_cast<int> (buffer[bytesRead]) << std::endl;
     if (buffer[bytesRead -1 ] != '\n')
     {
         std::cout << buffer[bytesRead - 1] << std::endl;
@@ -222,6 +222,7 @@ void Server::handleClientMessage(int clientFd) {
     _old_buf = "";
     std::cout << "Received message: " << completeMessage << std::endl;
     completeMessage = cleanIrssiString(completeMessage, '\r');
+    completeMessage = cleanIrssiString(completeMessage, '\n');
     parsingData(completeMessage, clientFd);
   
 }

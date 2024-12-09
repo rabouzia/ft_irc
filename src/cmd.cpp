@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 00:29:18 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 01:10:35 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,8 +217,12 @@ void Server::handlePassCommand(const std::vector<std::string>& data, int ClientF
         return;
     }
     const std::string &password = data[1];
-    std::cout << password << std::endl;
-    std::cout << "111111111111111111111111111111111111111111111111111111111111111111\n";
+    for (size_t i = 0; i < password.length(); i++)
+    {
+        std::cout << "|" << password[i] << "|" << std::endl;
+        
+    }
+    std::cout << "00000000000000000000000000\n";
     if (password == _passwd) {
     std::cout << "111111111111111111111111111111111111111111111111111111111111111111\n";
         clientImap[ClientFD]->setPasswordVerified(true);

@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/08 22:06:40 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 01:27:53 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Channel {
 		std::string _password;
 		std::string _topic;
 		bool _inviteOnly;
-		bool _topicAllow; //true
+		bool _topicAllow;
 		bool _Islimit;
 		int limitUser;
 		int nbLimit;
