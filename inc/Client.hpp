@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/09 20:43:14 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 22:47:04 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,6 @@ class Client{
 		int Socket;
 		sockaddr_in serverAddress;
 		sockaddr_in clientAddress;
-		std::string _nick;
 		bool psswdCheck;
 		bool _InChannel;
 		
@@ -48,6 +47,11 @@ class Client{
 		}
     	std::string _old_buf;
 		~Client(){};
+		std::string _nick;
+		std::string _user;
+		std::string _realname;
+		std::string _mode;
+
 		void Send();
 		void Connect();
 		std::string getNick() const 

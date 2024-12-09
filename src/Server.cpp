@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 21:03:23 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 22:48:18 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,7 @@ void Server::handleNewConnection() {
     std::cout << "New client connected: " << clientSocket << std::endl;
     std::string nickname = "NewUser"; 
     clientImap[clientSocket]  = new Client (clientSocket, (nickname + intToString(num++)));
-    SendRPL(clientSocket, "001", clientImap[clientSocket]->getNick(), "Welcome to the IRC network, " + clientImap[clientSocket]->getNick() + "!");
+
 }
 
 std::string replaceIrssiString(std::string inputString, char oldChar, char newChar) {
@@ -235,6 +235,7 @@ void Server::handleClientMessage(int clientFd) {
     std::cout << "Received message: " << completeMessage << std::endl;
     completeMessage = cleanIrssiString(completeMessage, '\r');
 	completeMessage[completeMessage.size()] = '\0';
+	std::cout << "Received message: " << completeMessage << std::endl;	
 	std::vector<std::string> data = split(completeMessage, '\n');
    try{
 		for (std::vector<std::string>::iterator it = data.begin(); it != data.end(); it++)

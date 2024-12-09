@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cmd.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 21:27:05 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 22:51:30 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,11 @@ void Server::parsingData(std::string& str, int ClientFD) {
         handlePassCommand(data, ClientFD);
     } else if (command == "NICK") {
         handleNickCommand(data, ClientFD);
-    } else if (command == "PING") {
+    }
+	else if (command == "USER") {
+        handleUserCommand(data, ClientFD);
+    } 
+	else if (command == "PING") {
         handlePingCommand(data, ClientFD);
     } else if (command == "PRIVMSG") {
         handlePrivmsgCommand(data, ClientFD);
@@ -62,6 +66,22 @@ void Server::parsingData(std::string& str, int ClientFD) {
     }
 }
 
+void Server::handleUserCommand( std::vector<std::string>& data,int  ClientFD)
+{
+	if (data.size() < 5)
+	{
+		SendRPL(ClientFD, "461", clientImap[ClientFD]->getNick(), "USER :Not enough parameters");
+		return;
+	}	
+	clientImap[ClientFD]->_user = data[1];
+	clientImap[ClientFD]->_mode = data[2];
+	clientImap[ClientFD]->_realname = data[4];
+	SendRPL(ClientFD, "001", clientImap[ClientFD]->getNick(), "Welcome to the IRC network, " + clientImap[ClientFD]->getNick() + "!");
+	SendRPL(ClientFD, "002", clientImap[ClientFD]->getNick(), "Your host is " + serverName + ", running version 1.0");
+	SendRPL(ClientFD, "003", clientImap[ClientFD]->getNick(), "This server was created on 2024/12/07 00:08:11");
+	SendRPL(ClientFD, "004", clientImap[ClientFD]->getNick(), serverName + " 1.0 o o");
+
+}
 
 void Server::handlePartCommand(const std::vector<std::string>& data, int ClientFD) {
     (void)data;
@@ -140,7 +160,6 @@ void Server::handleKickCommand(const std::vector<std::string>& data, int ClientF
         channel->del(clientSmap[kickName]->getSocket());
     }
 }
-
 
 // TOPIC #test :coucou
 void Server::handleTopicCommand(const std::vector<std::string>& data, int ClientFD) {

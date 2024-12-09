@@ -52,7 +52,7 @@ private:
     void handleModeCommand(const std::vector<std::string>& data, int ClientFD);
     void handleInviteCommand(const std::vector<std::string>& data, int ClientFD);
     void handleTopicCommand(const std::vector<std::string>& data, int ClientFD);
-
+	void handleUserCommand(std::vector<std::string> &data, int ClientFD);
     // Helper pour les commandes MODE
     void handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD);
 
