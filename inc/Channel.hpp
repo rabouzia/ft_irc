@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:13:48 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/09 19:42:38 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/09 21:31:31 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,6 +116,7 @@ class Channel
 
 		if (OP)
 		{
+        	std::cout << "enter in MODE [k]\n\n";
 			std::string message = ":" + OP->getNick() + " 324 " + getName() + "+k :Password set\r\n";
 			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
@@ -126,6 +127,7 @@ class Channel
 		_password = "";
 		if (OP)
 		{
+        	std::cout << "enter in MODE [-k]\n\n";
 			std::string message = ":" + OP->getNick() + " 324 " + getName() + "-k :Password cleared\r\n";
 			send(OP->getSocket(), message.c_str(), message.size(), 0);
 		}
@@ -133,6 +135,7 @@ class Channel
 
 	void addOperator(Client *user, Client *OP)
 	{
+        std::cout << "enter in MODE [+o]\n\n";
 		if (!user || OperatorMap[user->getSocket()])
 			return ;
 		OperatorMap[user->getSocket()] = user;
@@ -146,6 +149,8 @@ class Channel
 
 	void removeOperator(Client *user, Client *OP)
 	{
+        std::cout << "enter in MODE [-o]\n\n";
+
 		if (!user || OperatorMap.find(user->getSocket()) == OperatorMap.end())
 			return ;
 		OperatorMap.erase(user->getSocket());
@@ -158,20 +163,21 @@ class Channel
 	}
 	void setUserLimit(int num, Client *OP)
 	{
-			limitUser = num;
-			_Islimit = true;
-			if (OP)
-			{
-				std::stringstream ss;
-				ss << num;
-				std::string message = ":" + OP->getNick() + " 324 " + getName() + " +l " + ss.str() + " :User limit set\r\n";
-				send(OP->getSocket(), message.c_str(), message.size(), 0);
-			}
-		
+        std::cout << "enter in MODE [+l]\n\n";
+		limitUser = num;
+		_Islimit = true;
+		if (OP)
+		{
+			std::stringstream ss;
+			ss << num;
+			std::string message = ":" + OP->getNick() + " 324 " + getName() + " +l " + ss.str() + " :User limit set\r\n";
+			send(OP->getSocket(), message.c_str(), message.size(), 0);
+		}
 	}
 	
 	void clearUserLimit(Client* OP) 
 	{
+        std::cout << "enter in MODE [-l]\n\n";
 		_Islimit = false;
 
 		if (OP) 

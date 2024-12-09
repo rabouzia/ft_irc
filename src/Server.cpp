@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 19:59:47 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/09 21:03:23 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include <vector>
 #include <algorithm>
 #include "errmsg.hpp"
+#include <cstring>
+#include <signal.h>
 
 Server::Server(int port, const std::string &passwd) : _passwd(passwd)
 {
@@ -28,7 +30,7 @@ Server::Server(int port, const std::string &passwd) : _passwd(passwd)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-    int opt;
+    int opt = 1;
     _old_buf = "";
     if(setsockopt(this->serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) { 
         throw std::runtime_error("Could not set socket options");    
@@ -42,6 +44,19 @@ Server::Server(int port, const std::string &passwd) : _passwd(passwd)
 
 Server::~Server()
 {
+    for (std::map<int, Client*>::iterator it = clientImap.begin(); it != clientImap.end(); it++)
+    {
+        if (it->second)
+        {
+            epoll_ctl(epollFd, EPOLL_CTL_DEL, it->second->getSocket(), 0);
+            delete(it->second);
+        }
+    }
+    for (std::map<std::string, Channel*>::iterator it = channelSmap.begin(); it != channelSmap.end(); it++)
+    {
+        if (it->second)
+            delete(it->second);
+    }
     close(serverSocket);
     close(epollFd);
 }
@@ -73,6 +88,16 @@ void Server::listenServ()
     std::cout << "Server is listening on port " << ntohs(serverAddress.sin_port) << std::endl;
 }
 
+void handle_sigint(int sig, siginfo_t *info, void *context) {
+    (void)info;
+    (void)context;
+    if(sig)
+    {
+        // server_off = true;
+        std::cerr << "\n Signal reçu. Arrêt du serveur..." << std::endl;
+    }
+}
+
 void Server::run()
 {
     epollFd = epoll_create1(0);
@@ -88,9 +113,23 @@ void Server::run()
 
     epoll_event eventsClient[10];
     while (true) {
+
+        struct sigaction sa;
+        sa.sa_flags = SA_SIGINFO;
+        sa.sa_sigaction = handle_sigint; 
+        sigemptyset(&sa.sa_mask); 
+    
+        // Installation du gestionnaire de signal pour SIGINT
+        if (sigaction(SIGINT, &sa, NULL) == -1) {
+            if(SIGINT)
+            {
+                herror("sigaction");
+                return ;
+            }
+        }
         int eventCount = epoll_wait(epollFd, eventsClient, 10, -1);
         if (eventCount == -1)
-            throw std::runtime_error("epoll_wait failed");
+            throw std::runtime_error("");
 
         for (int i = 0; i < eventCount; ++i) {
             if (eventsClient[i].data.fd == serverSocket) 
@@ -126,21 +165,15 @@ void Server::handleNewConnection() {
     int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
     if (clientSocket == -1)
         throw std::runtime_error("Failed to accept new connection");
-
     setNonBlocking(clientSocket);
-
     epoll_event event;
     event.events = EPOLLIN;
     event.data.fd = clientSocket;
-
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &event) == -1)
         throw std::runtime_error("Failed to add client socket to epoll");
     std::cout << "New client connected: " << clientSocket << std::endl;
-
-    // Send a welcome message to the new client
-    std::string nickname = "NewUser"; // This should eventually be replaced with actual user nickname
-     Client *newClient = new Client (clientSocket, (nickname + intToString(num++)));
-    clientImap[clientSocket] = newClient;
+    std::string nickname = "NewUser"; 
+    clientImap[clientSocket]  = new Client (clientSocket, (nickname + intToString(num++)));
     SendRPL(clientSocket, "001", clientImap[clientSocket]->getNick(), "Welcome to the IRC network, " + clientImap[clientSocket]->getNick() + "!");
 }
 
@@ -149,17 +182,18 @@ std::string replaceIrssiString(std::string inputString, char oldChar, char newCh
     return inputString;
 }
 std::string cleanIrssiString(std::string inputString, char c) {
-    // Suppression des caractères \r et \n
     inputString.erase(
         std::remove(inputString.begin(), inputString.end(), c), 
         inputString.end()
- 
 );
      
     return inputString;
 }
 
 void Server::disconnectClient(int fd) {
+    
+    if (clientImap[fd])
+        delete clientImap[fd];
     clientImap.erase(fd);
     epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
     std::cout << "Client disconnected: " << fd << std::endl;
@@ -170,33 +204,7 @@ void Server::disconnectClient(int fd) {
 void Server::sendToClient(int fd, const std::string& message) {
     send(fd, message.c_str(), message.size(), 0);
 }
-#include <cstring>
-// void Server::handleClientMessage(int clientFd)
-// {
-//     char buffer[1024];
-    
-//     int bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-//     if (bytesRead <= 0) {
-//         disconnectClient(clientFd);
-//         std::cout << "Client disconnected: " << clientFd << std::endl;
-//         return;
-//     }
-//     buffer[bytesRead] = '\0';
-//     std::string to = "";
-//     to = buffer;
-//     if (buffer[bytesRead - 1] != '\n' && buffer[bytesRead - 2] != '\r')
-//     {
-//         if (_old_buf.empty())
-//             _old_buf = buffer;
-//         else
-//         {
-//             _old_buf += buffer;
-//         }
-//     }
-// 	std::string buff = cleanIrssiString(to.c_str(), '\r');
-//     std::cout << buff << std::endl;
-// 	parsingData(buff, clientFd);	
-// }
+
 
 
 void Server::handleClientMessage(int clientFd) {
@@ -215,15 +223,15 @@ void Server::handleClientMessage(int clientFd) {
 	if (buffer[bytesRead -1 ] != '\n' && buffer[bytesRead - 2] != '\r')
     {
         std::cout << buffer[bytesRead - 1] << std::endl;
-		if (_old_buf.empty())
-			_old_buf = buffer;
+		if (clientImap[clientFd]->_old_buf.empty())
+			clientImap[clientFd]->_old_buf = buffer;
 		else
-        	_old_buf += buffer;
+        	clientImap[clientFd]->_old_buf += buffer;
         return ;
     }
-    completeMessage = _old_buf; 
+    completeMessage = clientImap[clientFd]->_old_buf; 
     completeMessage += buffer;
-    _old_buf = "";
+    clientImap[clientFd]->_old_buf = "";
     std::cout << "Received message: " << completeMessage << std::endl;
     completeMessage = cleanIrssiString(completeMessage, '\r');
 	completeMessage[completeMessage.size()] = '\0';
@@ -234,11 +242,9 @@ void Server::handleClientMessage(int clientFd) {
 			*it = cleanIrssiString(*it, '\n');
 			parsingData(*it, clientFd);
 		}
-	
    }
    catch(...)
    {
 	   return ;
    }
-   
 }

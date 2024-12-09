@@ -6,7 +6,7 @@
 /*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/07 17:48:02 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/09 20:43:14 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client{
 		bool psswdCheck;
 		bool _InChannel;
 		
+		
 
 	public:
 		Client(int FD, std::string nick)
@@ -42,8 +43,10 @@ class Client{
 			psswdCheck = false;
 			_InChannel = false;
 			Socket = FD;
+			_old_buf = "";
 			_nick =  nick;
 		}
+    	std::string _old_buf;
 		~Client(){};
 		void Send();
 		void Connect();

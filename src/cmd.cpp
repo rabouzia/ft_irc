@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cmd.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 20:01:39 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/09 21:27:05 by abdmessa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,25 +72,21 @@ void Server::handlePartCommand(const std::vector<std::string>& data, int ClientF
             break;
         }
     }
-    std::cout << "111111111111111111111111111111111111111111111111111111111111111111\n";
     if (!currentChannel) {
         // Le client n'est pas dans un canal
         SendRPL(ClientFD, "442", clientImap[ClientFD]->getNick(), ":You're not on any channel");
         return;
     }
 
-    std::cout << "222222222222222222222222222222222222222222222222222222222222222222\n";
     const std::string& channelName = currentChannel->getName();
     std::string partMessage = ":" + clientImap[ClientFD]->getNick() + " PART " + channelName + "\r\n";
     std::map<int, Client*>& clientMap = currentChannel->getClientMap();
     SendRPL(ClientFD, "482", clientImap[ClientFD]->getNick(), channelName + " :You're not channel operator");
     currentChannel->decrementNbLimit();
-    std::cout << "333333333333333333333333333333333333333333333333333333333333333333333\n";
 
     for (std::map<int, Client*>::iterator clientIt = clientMap.begin(); clientIt != clientMap.end(); ++clientIt) {
         send(clientIt->first, partMessage.c_str(), partMessage.size(), 0);
     }
-    std::cout << "444444444444444444444444444444444444444444444444444444444444444444444444\n";
 
     // Supprimer le client du canal
     currentChannel->del(ClientFD);
@@ -192,9 +188,7 @@ void Server::handlePassCommand(const std::vector<std::string>& data, int ClientF
         std::cout << "|" << password[i] << "|" << std::endl;
         
     }
-    std::cout << "00000000000000000000000000\n";
     if (password == _passwd) {
-    std::cout << "111111111111111111111111111111111111111111111111111111111111111111\n";
         clientImap[ClientFD]->setPasswordVerified(true);
         clientSmap[clientImap[ClientFD]->getNick()] = clientImap[ClientFD];
         std::cout << "Correct Password\n";
@@ -307,7 +301,6 @@ void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) 
     }
     else
     {
-        std::cout << "\n\n JE SUIS LA +============= \n\n";
         std::string response = clientImap[ClientFD]->getNick() + " PRIVMSG " + recipient + " " + message + "\r\n";
         std::cout << "Message sent to client: " << response << std::endl;
         send(clientSmap[recipient]->getSocket(), response.c_str(), response.size(), 0);
@@ -333,12 +326,7 @@ void Server::handleJoinCommand(const std::vector<std::string>& data, int ClientF
 
             Channel *existingChannel = channelSmap[channelName];
             if (existingChannel->addClient(clientImap[ClientFD], pass) == 1) 
-            {
-                // std::cout << "User " << clientImap[ClientFD]->getNick() << " joined existing channel: " << channelName << std::endl;
                 SendRPL(ClientFD, "332", clientImap[ClientFD]->getNick(), channelName + " :" + channelSmap[channelName]->getTopic());
-                //SendRPL(ClientFD, "353", clientImap[ClientFD]->getNick(), "= " + channelName + " :" + channelSmap[channelName]->getClientList());
-               // SendRPL(ClientFD, "366", clientImap[ClientFD]->getNick(), channelName + " :End of /NAMES list.");
-            }
         } 
     }
 }
@@ -362,7 +350,6 @@ void Server::handleModeCommand(const std::vector<std::string>& data, int ClientF
         char mode = modeString[i];
         handleModeChange(channel, mode, addingMode, data, ClientFD);
     }
-   // SendRPL(ClientFD, "324", clientImap[ClientFD]->getNick(), channelName + " " + channel->getModeString());
 }
 
 void Server::handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD) {
