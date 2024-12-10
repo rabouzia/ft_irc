@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:15:52 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/09 22:47:04 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/10 23:28:14 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ class Client{
 		sockaddr_in clientAddress;
 		bool psswdCheck;
 		bool _InChannel;
-		
+		bool _nickVerified;
+		bool _userNameVerified;
 		
 
 	public:
@@ -41,6 +42,8 @@ class Client{
 		{
 			psswdCheck = false;
 			_InChannel = false;
+			_nickVerified = false;
+			_userNameVerified = false;
 			Socket = FD;
 			_old_buf = "";
 			_nick =  nick;
@@ -62,6 +65,16 @@ class Client{
 		{
 			_nick = nick;
 		}
+
+		void setNickVerified(bool status){
+			_nickVerified = status;
+		}
+		bool getNickVerified() const{
+			return _nickVerified;
+		}
+		std::string getUsername() const {return _user;}
+		bool getUserNameVerified()  {return _userNameVerified;}
+		void setUserNameVerified(bool status) {_userNameVerified = status;}
 		void InChannel(bool status) {_InChannel = status;}
 		int getSocket() const {return Socket;}
 		bool getInChannel() const {return _InChannel;}
@@ -71,3 +84,14 @@ class Client{
 
 };
 #endif
+// std::string getHostname() {
+// 	char hostname[1024];
+// 	if (gethostname(hostname, sizeof(hostname)) == -1) {
+// 		return "unknown";
+// 	}
+// 	return std::string(hostname);
+// }
+// std::string Client::getMask()t {
+// 	std::string hostname = getHostname();
+// 	return _nick + "!" + _user + "@" + hostname;
+// }

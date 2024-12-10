@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/07 00:08:11 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 22:51:30 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/10 22:40:15 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "Server.hpp"
 #include <vector>
 #include <cstring>
+#include "errmsg.hpp"
 class Server;
 
 void Server::parsingData(std::string& str, int ClientFD) {
@@ -59,9 +60,16 @@ void Server::parsingData(std::string& str, int ClientFD) {
         handleTopicCommand(data, ClientFD);
     } else if (command == "INVITE") {
         handleInviteCommand(data, ClientFD);
-    } else if (command == "PART") {
-        handlePartCommand(data, ClientFD);
-    } else {
+	}
+    // } else if (command == "PART") {
+    //     handlePartCommand(data, ClientFD);
+    else if (command == "BOT") {
+        handleBotCommand(ClientFD);
+    }
+	 else if (command == "QUIT") {
+        handleQuitCommand(ClientFD);
+    }  
+	else {
         std::cerr << "Unknown command: " << command << std::endl;
     }
 }
@@ -72,7 +80,12 @@ void Server::handleUserCommand( std::vector<std::string>& data,int  ClientFD)
 	{
 		SendRPL(ClientFD, "461", clientImap[ClientFD]->getNick(), "USER :Not enough parameters");
 		return;
-	}	
+	}
+	if (clientImap[ClientFD]->getNickVerified() == false)
+	{
+		SendRPL(ClientFD, "451", clientImap[ClientFD]->getNick(), "You have not registered");
+		return;
+	}
 	clientImap[ClientFD]->_user = data[1];
 	clientImap[ClientFD]->_mode = data[2];
 	clientImap[ClientFD]->_realname = data[4];
@@ -80,6 +93,7 @@ void Server::handleUserCommand( std::vector<std::string>& data,int  ClientFD)
 	SendRPL(ClientFD, "002", clientImap[ClientFD]->getNick(), "Your host is " + serverName + ", running version 1.0");
 	SendRPL(ClientFD, "003", clientImap[ClientFD]->getNick(), "This server was created on 2024/12/07 00:08:11");
 	SendRPL(ClientFD, "004", clientImap[ClientFD]->getNick(), serverName + " 1.0 o o");
+	clientImap[ClientFD]->setUserNameVerified(true);
 
 }
 
@@ -93,36 +107,30 @@ void Server::handlePartCommand(const std::vector<std::string>& data, int ClientF
         }
     }
     if (!currentChannel) {
-        // Le client n'est pas dans un canal
-        SendRPL(ClientFD, "442", clientImap[ClientFD]->getNick(), ":You're not on any channel");
+		send(ClientFD, "442 :You're not on that channel\r\n", 30, 0);
         return;
     }
 
-    const std::string& channelName = currentChannel->getName();
-    std::string partMessage = ":" + clientImap[ClientFD]->getNick() + " PART " + channelName + "\r\n";
-    std::map<int, Client*>& clientMap = currentChannel->getClientMap();
-    SendRPL(ClientFD, "482", clientImap[ClientFD]->getNick(), channelName + " :You're not channel operator");
-    currentChannel->decrementNbLimit();
-
-    for (std::map<int, Client*>::iterator clientIt = clientMap.begin(); clientIt != clientMap.end(); ++clientIt) {
-        send(clientIt->first, partMessage.c_str(), partMessage.size(), 0);
-    }
-
-    // Supprimer le client du canal
-    currentChannel->del(ClientFD);
-    std::cout << "Client " << clientImap[ClientFD]->getNick() << " left channel " << channelName << std::endl;
-
-    // Si le canal est vide, le supprimer
+	std::string partMessage = ":" + clientImap[ClientFD]->getNick() + " PART " + currentChannel->getName() + "\r\n";
+	if (currentChannel->isAClient(ClientFD) == 1)
+	{
+		currentChannel->del(ClientFD);
+		std::cout << "Client " << clientImap[ClientFD]->getNick() << " left channel " << currentChannel->getName() << std::endl;
+		for (std::map<int, Client*>::iterator it = (currentChannel->getClientMap()).begin(); it != (currentChannel->getClientMap()).end(); it++)
+		{
+			if (it->first != ClientFD)
+				send(it->first, partMessage.c_str(), partMessage.size(), 0);
+		}
+	}
     if (currentChannel->getClientMap().empty()) {
-        channelSmap.erase(channelName);
+        channelSmap.erase(currentChannel->getName());
         delete currentChannel;
-        std::cout << "Channel " << channelName << " deleted as it is now empty." << std::endl;
+        std::cout << "Channel " << currentChannel->getName() << " deleted as it is now empty." << std::endl;
     }
 }
 
 // KICK #test rabouzia 
 
-# define KICK_CLIENT(nickname, username, cmd, channel, concerned_client_nickname)((user_id(nickname, username, cmd)) + "#" + channel + " " + concerned_client_nickname + " :\r\n")
 
 void Server::handleKickCommand(const std::vector<std::string>& data, int ClientFD) {
 
@@ -140,8 +148,6 @@ void Server::handleKickCommand(const std::vector<std::string>& data, int ClientF
     channel = it->second;
     if (!channel->isOperator(clientImap[ClientFD]->getSocket())) {
         SendRPL(ClientFD, "482", clientImap[ClientFD]->getNick(), channelName + " :You're not channel operator");
-        channel->decrementNbLimit();
-        channel->del(ClientFD);
         return;
     }
     std::string kickName = data[2];
@@ -156,8 +162,8 @@ void Server::handleKickCommand(const std::vector<std::string>& data, int ClientF
         for (clientIt = channel->getClientMap().begin(); clientIt != channel->getClientMap().end(); ++clientIt) {
             send(clientIt->first, kickMessage.c_str(), kickMessage.size(), 0);
         }
-        SendRPL(clientSmap[kickName]->getSocket() ,"482", clientImap[ClientFD]->getNick(), channel->getName() + " You're not channel operator");
         channel->del(clientSmap[kickName]->getSocket());
+		channel->decrementNbLimit();
     }
 }
 
@@ -180,7 +186,6 @@ void Server::handleTopicCommand(const std::vector<std::string>& data, int Client
     if (!channel->isOperator(clientImap[ClientFD]->getSocket())) {
         SendRPL(ClientFD, "482", clientImap[ClientFD]->getNick(), channelName + " :You're not channel operator");
         channel->decrementNbLimit();
-
         return;
     }
     std::string newTopic = data[2].substr(1); 
@@ -205,7 +210,6 @@ void Server::handlePassCommand(const std::vector<std::string>& data, int ClientF
     for (size_t i = 0; i < password.length(); i++)
     {
         std::cout << "|" << password[i] << "|" << std::endl;
-        
     }
     if (password == _passwd) {
         clientImap[ClientFD]->setPasswordVerified(true);
@@ -241,14 +245,20 @@ void Server::handleNickCommand(const std::vector<std::string>& data, int ClientF
         SendRPL(ClientFD, "433", "", ":Nickname is already in use");
         return;
     }
-
     // Update nickname
     std::string oldNick = clientImap[ClientFD]->getNick();
     clientSmap.erase(oldNick);
     clientImap[ClientFD]->setNick(newNick);
     clientSmap[newNick] = clientImap[ClientFD];
     std::string message = ":" + oldNick + "!user@host NICK :" + newNick + "\r\n";
-    send(ClientFD, message.c_str(), message.size(), 0); // Notify the client
+	send(ClientFD, message.c_str(), message.size(), 0);
+	for (std::map<int, Client*>::iterator it = clientImap.begin(); it != clientImap.end(); it++) {
+		if (it->first != ClientFD) {
+			send(it->first, message.c_str(), message.size(), 0);
+		}
+	}
+   // send(ClientFD, message.c_str(), message.size(), 0); // Notify the client
+	clientImap[ClientFD]->setNickVerified(true);
     std::cout << "Nickname changed from " << oldNick << " to " << newNick << std::endl;
 }
 
@@ -259,12 +269,20 @@ void Server::handlePingCommand(const std::vector<std::string>& data, int ClientF
         return;
     }
     const std::string &token = data[1];
-    std::string response = ":" + serverName + " PONG " + serverName + " :" + token + "\r\n";
+    std::string response = ":" + serverName + " PONG " + ":" + token + "\r\n";
     sendToClient(ClientFD, response);
 }
 
 // Handle "PRIVMSG" command
 void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) {
+	if ((clientImap[ClientFD]->getNickVerified() == false )|| (clientImap[ClientFD]->getUserNameVerified() == false) || (clientImap[ClientFD]->GetPasswordVerified() == false))
+	{
+		std::cout << "NICK->>>>" << clientImap[ClientFD]->getNickVerified() << std::endl;
+		std::cout << "USER->>>>" << clientImap[ClientFD]->getUserNameVerified() << std::endl;
+		std::cout << "PASS->>>>" << clientImap[ClientFD]->GetPasswordVerified() << std::endl;	
+		SendRPL(ClientFD, "451", clientImap[ClientFD]->getNick(), "You have not registered");
+		return;
+	}
     if (data.size() < 3) {
         SendRPL(ClientFD, "411", clientImap[ClientFD]->getNick(), ":No recipient or text provided");
         return;
@@ -292,7 +310,11 @@ void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) 
             std::cout << "Not a client\n";
             return ;  
         }
-        std::string response = ":" + clientImap[ClientFD]->getNick() + " PRIVMSG " + recipient + " :" + message + "\r\n";
+		std::vector<std::string> data = split(message, ' ');
+		message = data[2];
+		for(size_t i = 3; i < data.size(); i++)
+			message += " " + data[i];
+        std::string response = RPL_PRIVMSG_CHANNEL(clientImap[ClientFD]->getNick(), channelName, message);
         std::cout << "Message sent to channel: " << response << std::endl;  
     
         std::map<int, Client*>& clientMap = channel->getClientMap();
@@ -320,15 +342,24 @@ void Server::handlePrivmsgCommand(std::vector<std::string>& data, int ClientFD) 
     }
     else
     {
+		std::cout << "message " << message << std::endl;
+		size_t colon_pos = message.find(':');
+		message = message.substr(colon_pos);
         std::string response = clientImap[ClientFD]->getNick() + " PRIVMSG " + recipient + " " + message + "\r\n";
         std::cout << "Message sent to client: " << response << std::endl;
         send(clientSmap[recipient]->getSocket(), response.c_str(), response.size(), 0);
-        send(clientImap[ClientFD]->getSocket(), response.c_str(), response.size(), 0);
+     //   send(clientImap[ClientFD]->getSocket(), response.c_str(), response.size(), 0);
     }
 }
 
 void Server::handleJoinCommand(const std::vector<std::string>& data, int ClientFD) {
     
+
+	if ((clientImap[ClientFD]->getNickVerified() == false )|| (clientImap[ClientFD]->getUserNameVerified() == false) || clientImap[ClientFD]->GetPasswordVerified() == false)
+	{
+		SendRPL(ClientFD, "451", clientImap[ClientFD]->getNick(), "You have not registered");
+		return;
+	}
     if (data.size() < 2) {
         SendRPL(ClientFD, "461", clientImap[ClientFD]->getNick(), "JOIN :Not enough parameters");
         return;
@@ -376,8 +407,6 @@ void Server::handleModeChange(Channel *channel, char mode, bool addingMode, cons
     if (!channel->isOperator(ClientFD))
     {
 		SendRPL(ClientFD,"482", clientImap[ClientFD]->getNick(), channel->getName() + " You're not channel operator");
-        channel->decrementNbLimit();
-        channel->del(ClientFD);
         return;
     }
     switch (mode) {
@@ -432,3 +461,20 @@ void Server::handleInviteCommand(const std::vector<std::string>& data, int Clien
 }
 
 
+void Server::handleBotCommand(int ClientFD)
+{
+	std::cout << "Bot command received\n";
+	for(std::map<std::string, Client *>::iterator it = clientSmap.begin(); it != clientSmap.end(); it++)
+	{
+		if (clientImap[ClientFD] && it->second) {
+			std::string response = ":" + serverName + " PRIVMSG " + it->second->getNick() + " :I AM A BOT WHO SEND MESSAGE TO EVERYONE EACH 5 MINUTES !!!\r\n";
+			if(it->second &&  it->second->GetPasswordVerified() == true && it->second->getNickVerified() == true && it->second->getUserNameVerified() == true)
+			{
+				std::cout << "Bot message sent to " << it->second->getNick() << std::endl;
+				if (send(it->second->getSocket(), response.c_str(), response.size(), 0) == -1) {
+					std::cerr << "Error sending bot message to " << it->second->getNick() << std::endl;
+				}
+			}
+		}
+	}
+}

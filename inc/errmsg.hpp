@@ -77,7 +77,7 @@
 
             /* = = =    PRV MESSAGES     = = = */
 
-# define RPL_PRIVMSG_CHANNEL(nickname, chanel, msg) (":" + nickname + " PRIVMSG #" + chanel + " " + msg + "\r\n") // used
+# define RPL_PRIVMSG_CHANNEL(nickname, chanel, msg) (":" + nickname + " PRIVMSG " + chanel + " " + msg + "\r\n") // used
 
 # define CLIENT_ID(nickname, username, command) (":" + nickname + "!~" + username + "@" + "localhost" + " " + command + " ")
 # define RPL_PRIVMSG_CLIENT(nickname, username, dest, msg) (CLIENT_ID(nickname, username, "PRIVMSG") + dest + " :" + msg + "\r\n") // used
@@ -124,6 +124,6 @@
 
 #define ROL_TOPICWHOTIME(nickname, channel, concerned_client_nickname, time) (std::string(":") + SERVER_NAME + " 333 " + nickname + " " + channel + " " + concerned_client_nickname + " " + time + "\r\n")
 // #define CLIENT_ID(nickname, username, command) (":" + nickname + "!~" + username + "@" + chanel + " " + command + " ")
-// #define  NICK_RPL(nickname, username, new_nickname) (CLIENT_ID(nickname, username, "NICK") + ":" + new_nickname + "\r\n")
+ #define  NICK_RPL(nickname, username, new_nickname) (CLIENT_ID(nickname, username, "NICK") + ":" + new_nickname + "\r\n")
 
 #endif

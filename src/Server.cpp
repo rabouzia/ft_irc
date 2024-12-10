@@ -6,7 +6,7 @@
 /*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 18:10:55 by abdmessa          #+#    #+#             */
-/*   Updated: 2024/12/09 22:48:18 by mdembele         ###   ########.fr       */
+/*   Updated: 2024/12/10 23:44:39 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,8 @@ Server::~Server()
     {
         if (it->second)
         {
-            epoll_ctl(epollFd, EPOLL_CTL_DEL, it->second->getSocket(), 0);
+			epoll_ctl(epollFd, EPOLL_CTL_DEL, it->second->getSocket(), 0);
+			close(it->second->getSocket());
             delete(it->second);
         }
     }
@@ -172,8 +173,7 @@ void Server::handleNewConnection() {
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &event) == -1)
         throw std::runtime_error("Failed to add client socket to epoll");
     std::cout << "New client connected: " << clientSocket << std::endl;
-    std::string nickname = "NewUser"; 
-    clientImap[clientSocket]  = new Client (clientSocket, (nickname + intToString(num++)));
+    clientImap[clientSocket]  = new Client (clientSocket, (""));
 
 }
 
@@ -191,13 +191,23 @@ std::string cleanIrssiString(std::string inputString, char c) {
 }
 
 void Server::disconnectClient(int fd) {
-    
     if (clientImap[fd])
-        delete clientImap[fd];
-    clientImap.erase(fd);
-    epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
-    std::cout << "Client disconnected: " << fd << std::endl;
-    close(fd);
+	{
+		for(std::map<std::string, Channel*>::iterator it = channelSmap.begin(); it != channelSmap.end(); it++)
+		{
+			if (it->second && it->second->isAClient(fd))
+				it->second->del(fd);
+		}
+		if(clientSmap[clientImap[fd]->getNick()])
+		{
+			clientSmap.erase(clientImap[fd]->getNick());
+			delete clientImap[fd];
+		}
+		clientImap.erase(fd);
+		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
+		std::cout << "Client disconnected: " << fd << std::endl;
+		close(fd);
+	}
 }
 
 
@@ -248,4 +258,15 @@ void Server::handleClientMessage(int clientFd) {
    {
 	   return ;
    }
+}
+
+void Server::handleQuitCommand(int ClientFD)
+{
+	std::string response = ":" + clientImap[ClientFD]->getNick() + " QUIT\r\n";
+	for (std::map<int, Client*>::iterator it = clientImap.begin(); it != clientImap.end(); it++)
+	{
+		if (it->first != ClientFD)
+			send(it->first, response.c_str(), response.size(), 0);
+	}
+	disconnectClient(ClientFD);
 }

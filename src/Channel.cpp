@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: abdmessa <abdmessa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdembele <mdembele@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 17:44:37 by rabouzia          #+#    #+#             */
-/*   Updated: 2024/12/09 21:29:43 by abdmessa         ###   ########.fr       */
+/*   Updated: 2024/12/11 00:12:28 by mdembele         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,16 @@
 #include <algorithm>
 
 Channel::Channel(std::string name, std::string password, Client *client, Server *server) : _name(name), _password(password) {
-	ClientMap[client->getSocket()] = client;
-	OperatorMap[client->getSocket()] = client;
-    std::vector<int> Whitelist;
-	client->InChannel(true);
-	this->_topicAllow = true;
-	this->server = server;
+    ClientMap[client->getSocket()] = client;
+    OperatorMap[client->getSocket()] = client;
+    whiteListe = std::vector<int>();
+    client->InChannel(true);
+    this->_topicAllow = true;
+    this->server = server;
     this->_Islimit = false;
     this->nbLimit = 0;
-	
+    _inviteOnly = false;
+    limitUser = 10;
 }
 
 int Channel::addClient(Client *user, const std::string& password) {
@@ -49,8 +50,8 @@ int Channel::addClient(Client *user, const std::string& password) {
     }
     if (ClientMap[user->getSocket()]) {
 
-        // server->SendRPL(user->getSocket(), "443", user->getNick(), _name + " :is already on channel");
-        //std::cout << "User " << user->getNick() << " is already in the channel: " << _name << std::endl;
+        server->SendRPL(user->getSocket(), "443", user->getNick(), _name + " :is already on channel");
+        std::cout << "User " << user->getNick() << " is already in the channel: " << _name << std::endl;
         return 0;
     }
     
@@ -59,12 +60,11 @@ int Channel::addClient(Client *user, const std::string& password) {
     this->nbLimit++;
     std::string joinMessage = ":" + user->getNick() + " JOIN " + _name + "\r\n";
     for (std::map<int, Client*>::iterator it = ClientMap.begin(); it != ClientMap.end(); ++it) {
-        if (it->first != user->getSocket()) {
             send(it->first, joinMessage.c_str(), joinMessage.size(), 0);
         }
-    }
+//	send(user->getSocket(), "001 :Welcome to the channel\r\n", 27, 0);
+//	send(user->getSocket(), "353 :Users in the channel \r\n", 27, 0);
     return 1;
-
 }
 
 

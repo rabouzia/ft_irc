@@ -53,6 +53,8 @@ private:
     void handleInviteCommand(const std::vector<std::string>& data, int ClientFD);
     void handleTopicCommand(const std::vector<std::string>& data, int ClientFD);
 	void handleUserCommand(std::vector<std::string> &data, int ClientFD);
+	void handleBotCommand( int ClientFD);
+	void handleQuitCommand(int ClientFD);
     // Helper pour les commandes MODE
     void handleModeChange(Channel *channel, char mode, bool addingMode, const std::vector<std::string>& data, int ClientFD);
 
@@ -71,7 +73,7 @@ public:
 	void SendRPL(int clientSocket, const std::string &replyCode, const std::string &nickname, const std::string &message);
     int isAClient(const std::string name)
 	{
-		if (clientSmap[name])
+		if (clientSmap[name] && (clientSmap[name]->getNickVerified() == true) && (clientSmap[name]->getUserNameVerified() == true) && (clientSmap[name]->GetPasswordVerified() == true))	
 			return 1;
 		return -1;
 	}
